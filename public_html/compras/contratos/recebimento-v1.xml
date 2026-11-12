@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<movimento xmlns="urn:compras:recebimento:1.0" versao="1.0" tipo="RECEBIMENTO">
+  <cabecalho>
+    <empresa>Compras Candeias LTDA</empresa>
+    <cnpj>11444777000161</cnpj>
+    <origem>compras</origem>
+    <dataArquivo>2026-10-27</dataArquivo>
+    <usuario>raphael.compras</usuario>
+  </cabecalho>
+  <recebimentos>
+    <recebimento referencia="REC-1001-7" status="PARCIAL">
+      <pedido>PC-1001</pedido>
+      <fornecedor documento="11222333000181">Dell Brasil</fornecedor>
+      <dataRecebimento>2026-10-30</dataRecebimento>
+      <notaFiscal>
+        <numero>45871</numero>
+        <serie>1</serie>
+        <chaveAcesso>42261011222333000181550010000458711000458712</chaveAcesso>
+        <dataEmissao>2026-10-28</dataEmissao>
+      </notaFiscal>
+      <conferente>Carlos</conferente>
+      <itens>
+        <item>
+          <sku>NOTEBOOK-001</sku>
+          <produto>Notebook Dell Inspiron 15</produto>
+          <unidade>UN</unidade>
+          <ean>7891234567895</ean>
+          <finalidade>VENDA</finalidade>
+          <armazenagem>FRAGIL</armazenagem>
+          <quantidade>3</quantidade>
+          <quantidadePedida>5</quantidadePedida>
+          <custoUnitario>3499.90</custoUnitario>
+          <avaria>
+            <quantidade>1</quantidade>
+            <motivo>QUEBRADO</motivo>
+            <descricao>Tela trincada no transporte.</descricao>
+          </avaria>
+          <lote>
+            <codigo>L2026-10A</codigo>
+            <dataFabricacao>2026-09-15</dataFabricacao>
+          </lote>
+          <localizacaoSugerida>Corredor B, prateleira 2</localizacaoSugerida>
+        </item>
+        <item>
+          <sku>MOUSE-01</sku>
+          <produto>Mouse USB</produto>
+          <unidade>UN</unidade>
+          <finalidade>USO_INTERNO</finalidade>
+          <quantidade>20</quantidade>
+          <quantidadePedida>20</quantidadePedida>
+          <custoUnitario>49.90</custoUnitario>
+        </item>
+      </itens>
+      <observacao>Falta 1 notebook; o fornecedor reenvia na proxima semana.</observacao>
+    </recebimento>
+  </recebimentos>
+  <totalizador>
+    <qtdRegistros>1</qtdRegistros>
+    <quantidadeTotal>23</quantidadeTotal>
+  </totalizador>
+</movimento>

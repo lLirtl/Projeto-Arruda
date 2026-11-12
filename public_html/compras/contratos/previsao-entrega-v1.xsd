@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Schema do movimento de Previsao de entrega, versao 1.0: pedidos de compra
+  ainda nao recebidos que o setor de Compras envia ao Estoque, para ele
+  reservar espaco e conferente antes de a mercadoria chegar.
+
+  Mesmo modelo dos contratos do Finanweb (saida-v2.xsd): cabecalho ->
+  registros -> totalizador, referencia e status como atributos.
+
+  Cada entrega e um pedido em aberto, com os itens que ainda faltam chegar.
+  Reenviar o mesmo pedido atualiza a previsao (origem + referencia). O
+  status fala da entrega:
+    AGUARDANDO   pedido feito, mercadoria ainda nao saiu do fornecedor
+    EM_TRANSITO  mercadoria a caminho
+    ATRASADA     dataPrevista ja passou e nada chegou
+    CANCELADA    pedido cancelado; o Estoque libera o espaco reservado
+
+  Regras de validacao (mesma numeracao dos schemas do Finanweb):
+    R1  documento do fornecedor: so digitos, 11 (CPF) ou 14 (CNPJ). Opcional.
+    R2  status: enumeracao fechada AGUARDANDO | EM_TRANSITO | ATRASADA | CANCELADA.
+    R4  datas: xs:date (AAAA-MM-DD).
+    R6  estrutura: cabecalho -> entregas -> totalizador, nessa ordem; ao menos
+        uma entrega, cada uma com ao menos um item; textos obrigatorios nao
+        vazios e sem espaco nas pontas.
+    R7  origem: letras minusculas, digitos e hifen, comecando por letra.
+    R8  referencia: o numero do pedido no Compras, sem espacos, ate 60.
+    R9  referencia unica dentro do arquivo.
+    R11 SKU: maiusculas, digitos e hifen, ate 40 (mesma regra do estoque.xsd).
+    R12 quantidades: inteiro positivo.
+    R13 o mesmo SKU nao se repete dentro de uma entrega.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:p="urn:compras:previsao-entrega:1.0"
+           targetNamespace="urn:compras:previsao-entrega:1.0"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+
+  <!-- ===================== Tipos simples ===================== -->
+
+  <!-- R6: texto obrigatorio. Nao pode ser vazio nem ter espaco no inicio/fim. -->
+  <xs:simpleType name="textoObrigatorio">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="120"/>
+      <xs:pattern value="\S(.*\S)?"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="textoLongo">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="500"/>
+      <xs:pattern value="\S(.*\S)?"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- R1: CPF (11 digitos) ou CNPJ (14 digitos), so numeros. -->
+  <xs:simpleType name="documentoParceiro">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\d{11}|\d{14}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="cnpj">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\d{14}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- R7 -->
+  <xs:simpleType name="identificadorSistema">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[a-z][a-z0-9\-]{1,29}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- R8 -->
+  <xs:simpleType name="referencia">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Za-z0-9][A-Za-z0-9._/\-]{0,59}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- R2: status da entrega (ver significado no topo). -->
+  <xs:simpleType name="statusEntrega">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="AGUARDANDO"/>
+      <xs:enumeration value="EM_TRANSITO"/>
+      <xs:enumeration value="ATRASADA"/>
+      <xs:enumeration value="CANCELADA"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="prioridade">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="BAIXA"/><xs:enumeration value="NORMAL"/><xs:enumeration value="URGENTE"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- R11 -->
+  <xs:simpleType name="sku">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z0-9]+(-[A-Z0-9]+)*"/>
+      <xs:maxLength value="40"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- R12 -->
+  <xs:simpleType name="quantidade">
+    <xs:restriction base="xs:positiveInteger">
+      <xs:maxInclusive value="2147483647"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="unidade">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="UN"/><xs:enumeration value="CX"/><xs:enumeration value="PCT"/>
+      <xs:enumeration value="KG"/><xs:enumeration value="G"/><xs:enumeration value="L"/>
+      <xs:enumeration value="ML"/><xs:enumeration value="M"/><xs:enumeration value="PAR"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="armazenagem">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="AMBIENTE"/><xs:enumeration value="REFRIGERADO"/>
+      <xs:enumeration value="CONGELADO"/><xs:enumeration value="FRAGIL"/>
+      <xs:enumeration value="INFLAMAVEL"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- ===================== Tipos complexos ===================== -->
+
+  <xs:complexType name="cabecalho">
+    <xs:sequence>
+      <xs:element name="empresa" type="p:textoObrigatorio"/>
+      <xs:element name="cnpj" type="p:cnpj"/>
+      <xs:element name="origem" type="p:identificadorSistema"/>  <!-- R7 -->
+      <xs:element name="dataArquivo" type="xs:date"/>            <!-- R4 -->
+      <xs:element name="usuario" type="p:textoObrigatorio"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="fornecedor">
+    <xs:simpleContent>
+      <xs:extension base="p:textoObrigatorio">
+        <xs:attribute name="documento" type="p:documentoParceiro" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="item">
+    <xs:sequence>
+      <xs:element name="sku" type="p:sku"/>                            <!-- R11 -->
+      <xs:element name="produto" type="p:textoObrigatorio"/>
+      <xs:element name="unidade" type="p:unidade" minOccurs="0"/>
+      <xs:element name="armazenagem" type="p:armazenagem" minOccurs="0"/>
+      <!-- Quanto ainda falta chegar deste item. -->
+      <xs:element name="quantidade" type="p:quantidade"/>              <!-- R12 -->
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="itens">
+    <xs:sequence>
+      <xs:element name="item" type="p:item" minOccurs="1" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="entrega">
+    <xs:sequence>
+      <xs:element name="fornecedor" type="p:fornecedor"/>
+      <xs:element name="dataPedido" type="xs:date" minOccurs="0"/>     <!-- R4 -->
+      <xs:element name="dataPrevista" type="xs:date"/>                 <!-- R4 -->
+      <xs:element name="prioridade" type="p:prioridade" minOccurs="0"/>
+      <xs:element name="itens" type="p:itens"/>
+      <xs:element name="observacao" type="p:textoLongo" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="referencia" type="p:referencia" use="required"/>   <!-- R8 -->
+    <xs:attribute name="status" type="p:statusEntrega" use="required"/>    <!-- R2 -->
+  </xs:complexType>
+
+  <xs:complexType name="entregas">
+    <xs:sequence>
+      <xs:element name="entrega" type="p:entrega" minOccurs="1" maxOccurs="unbounded">
+        <!-- R13 -->
+        <xs:unique name="skuUnicoNaEntrega">
+          <xs:selector xpath="p:itens/p:item"/>
+          <xs:field xpath="p:sku"/>
+        </xs:unique>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- quantidadeTotal = soma das <quantidade> dos itens. -->
+  <xs:complexType name="totalizador">
+    <xs:sequence>
+      <xs:element name="qtdRegistros" type="xs:positiveInteger"/>
+      <xs:element name="quantidadeTotal" type="xs:positiveInteger"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- ===================== Elemento raiz ===================== -->
+
+  <xs:element name="movimento">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="cabecalho" type="p:cabecalho"/>
+        <xs:element name="entregas" type="p:entregas"/>
+        <xs:element name="totalizador" type="p:totalizador"/>
+      </xs:sequence>
+      <xs:attribute name="versao" type="xs:string" use="required" fixed="1.0"/>
+      <xs:attribute name="tipo" type="xs:string" use="required" fixed="PREVISAO_ENTREGA"/>
+    </xs:complexType>
+
+    <!-- R9 -->
+    <xs:unique name="referenciaUnica">
+      <xs:selector xpath="p:entregas/p:entrega"/>
+      <xs:field xpath="@referencia"/>
+    </xs:unique>
+  </xs:element>
+
+</xs:schema>

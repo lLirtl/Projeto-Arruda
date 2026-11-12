@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contratos de integração · Compras</title>
+<meta name="description" content="Formatos XML que o setor de Compras troca com o Estoque">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..700&display=swap" rel="stylesheet">
+<style>
+  :root{color-scheme:light;--ink:#14283c;--accent:#f2b705;--bg:#f3f5f4;--panel:#fff;--text:#1b2430;--muted:#5e6b78;--border:#d9dfe3;--line:#e9edf0;--link:#2f6db3;--code:#eef1f3}
+  @media (prefers-color-scheme: dark){:root{color-scheme:dark;--ink:#0d1a27;--bg:#10161d;--panel:#161f29;--text:#e4e9ef;--muted:#9ba7b3;--border:#283545;--line:#202b37;--link:#6aa5e8;--code:#1f2a36}}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Archivo',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;font-size:15px}
+  header{background:var(--ink);color:#fff;padding:28px 20px 30px}
+  header .in,main{max-width:860px;margin:0 auto}
+  header .mark{display:inline-block;width:10px;height:10px;background:var(--accent);border-radius:2px;margin-right:8px}
+  header small{color:#9fb1c3;font-size:13px}
+  h1{font-size:32px;font-stretch:87%;font-weight:700;margin:6px 0 6px;line-height:1.15}
+  header p{margin:0;color:#c9d4df;max-width:68ch}
+  header a{color:#fff}
+  main{padding:28px 20px 60px}
+  h2{font-size:21px;font-stretch:87%;margin:34px 0 10px}
+  h3{font-size:16px;margin:0 0 4px}
+  p{margin:0 0 10px;max-width:72ch}
+  a{color:var(--link)}
+  .msg{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:12px}
+  .msg .tipo{font-size:12.5px;color:var(--muted);font-weight:500}
+  .files{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .files a{font-size:13px;text-decoration:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;background:var(--bg)}
+  .files a:hover{border-color:var(--link)}
+  ol,ul{padding-left:22px;max-width:72ch}
+  li{margin-bottom:6px}
+  code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;background:var(--code);padding:1px 5px;border-radius:4px}
+  pre{background:var(--code);padding:12px 14px;border-radius:8px;overflow:auto}
+  pre code{background:none;padding:0}
+  .tw{overflow-x:auto;background:var(--panel);border:1px solid var(--border);border-radius:10px}
+  table{border-collapse:collapse;width:100%;font-size:14px}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:500;font-size:12.5px}
+  tr:last-child td{border-bottom:0}
+</style>
+</head>
+<body>
+<header><div class="in">
+  <small><span class="mark"></span>Setor de Compras</small>
+  <h1>Contratos de integração</h1>
+  <p>Formatos XML que o Compras troca com o Estoque, no mesmo modelo dos <a href="https://finanwebsistema.vercel.app/contratos">contratos do Financeiro</a>. Cada mensagem tem um schema (XSD) e um XML de exemplo. <a href="../">Abrir o Controle de Compras</a>.</p>
+</div></header>
+<main>
+  <h2>O que o Compras troca com o Estoque</h2>
+
+  <div class="msg">
+    <div class="tipo">Compras → Estoque · envio</div>
+    <h3>Recebimento</h3>
+    <p>Cada baixa feita no Compras: o que chegou, de qual pedido e fornecedor, com status <code>TOTAL</code> ou <code>PARCIAL</code>. Leva também nota fiscal, quantidade pedida, custo, avaria e lote, quando houver. O Estoque dá entrada no saldo.</p>
+    <div class="files"><a href="recebimento-v1.xsd">recebimento-v1.xsd</a><a href="recebimento-v1.xml">exemplo</a></div>
+  </div>
+
+  <div class="msg">
+    <div class="tipo">Estoque → Compras · resposta</div>
+    <h3>Confirmação de recebimento</h3>
+    <p>A resposta ao Recebimento, recebimento por recebimento, pela mesma <code>referencia</code>: <code>ACEITO</code>, <code>DIVERGENTE</code> (com a quantidade contada), <code>REJEITADO</code> ou <code>DUPLICADO</code>. Se o arquivo inteiro não puder ser processado, vem <code>&lt;erro&gt;</code> no lugar do resultado.</p>
+    <div class="files"><a href="confirmacao-recebimento-v1.xsd">confirmacao-recebimento-v1.xsd</a><a href="confirmacao-recebimento-v1.xml">exemplo</a></div>
+  </div>
+
+  <div class="msg">
+    <div class="tipo">Compras → Estoque · envio</div>
+    <h3>Previsão de entrega</h3>
+    <p>Pedidos ainda não recebidos, com a data prevista e os itens que faltam chegar, para o Estoque reservar espaço e conferente. Status <code>AGUARDANDO</code>, <code>EM_TRANSITO</code>, <code>ATRASADA</code> ou <code>CANCELADA</code>. Reenviar o mesmo pedido atualiza a previsão.</p>
+    <div class="files"><a href="previsao-entrega-v1.xsd">previsao-entrega-v1.xsd</a><a href="previsao-entrega-v1.xml">exemplo</a></div>
+  </div>
+
+  <div class="msg">
+    <div class="tipo">Compras → Estoque · consulta</div>
+    <h3>Disponibilidade de produto</h3>
+    <p>Antes de comprar, o Compras pergunta ao Estoque quantas unidades de um produto estão disponíveis. A consulta não reserva nem movimenta o saldo. É o <strong>mesmo formato</strong> que o Estoque já responde ao Patrimônio, sem namespace: o Estoque não precisa implementar nada novo, só responder ao Compras como responde ao Patrimônio.</p>
+    <pre><code>&lt;consultaDisponibilidade&gt;
+  &lt;idConsulta&gt;CONS-COMPRAS-000001&lt;/idConsulta&gt;
+  &lt;produtoCodigo&gt;MONITOR-001&lt;/produtoCodigo&gt;
+&lt;/consultaDisponibilidade&gt;</code></pre>
+    <p>O Estoque copia <code>idConsulta</code> e <code>produtoCodigo</code> e devolve <code>&lt;produto&gt;</code> (nome e <code>quantidadeDisponivel</code>) ou <code>&lt;erro&gt;</code>, nunca os dois. Resposta idêntica reenviada não muda nada; resposta diferente para a mesma consulta é recusada, e o Compras gera outra consulta.</p>
+    <div class="files"><a href="disponibilidade-estoque.xsd">disponibilidade-estoque.xsd</a><a href="consulta-disponibilidade.xml">consulta</a><a href="resposta-disponibilidade.xml">resposta</a><a href="resposta-disponibilidade-erro.xml">resposta com erro</a><a href="https://patrimonio-contratos-20261029.fuzzycoati18.chatgpt.site/">contrato original do Patrimônio</a></div>
+  </div>
+
+  <p>O saldo de produtos continua no formato do próprio Estoque (<code>estoque.xsd</code> v2), que também aceita as entradas só com SKU e quantidade. O recebimento-v1 é o envio completo.</p>
+
+  <h2>Como enviar</h2>
+  <ol>
+    <li>Gere o XML seguindo o exemplo da mensagem.</li>
+    <li>Valide contra o XSD antes de enviar. Com o xmllint, por exemplo:
+      <pre><code>xmllint --noout --schema recebimento-v1.xsd recebimento.xml</code></pre></li>
+    <li>Envie pelo servidor de socket da turma. O XML vai em uma linha só, sem quebras entre as tags.</li>
+    <li>O Estoque responde ao Recebimento com uma confirmação. O Controle de Compras lê a confirmação sozinho quando ela chega pelo socket, ou por arquivo em <em>Estoque → Importar</em>.</li>
+  </ol>
+
+  <h2>Roteiro de teste</h2>
+  <ol>
+    <li><strong>Escolha um produto</strong> que exista no Estoque e combine o código com eles.</li>
+    <li><strong>Consulte a disponibilidade</strong> em Estoque → Disponibilidade e confira se a resposta volta com o mesmo <code>idConsulta</code>.</li>
+    <li><strong>Crie o pedido</strong> pela linha da consulta e envie a previsão de entrega.</li>
+    <li><strong>Dê baixa no recebimento</strong> e envie o recebimento-v1.</li>
+    <li><strong>Confira a confirmação</strong> do Estoque na aba Entradas: aceito, divergente ou rejeitado.</li>
+  </ol>
+  <p>O sucesso do envio pelo socket confirma só a transmissão. A integração está confirmada quando o resultado aparece no sistema do outro setor.</p>
+
+  <h2>Regras comuns</h2>
+  <ul>
+    <li><strong>Cabeçalho</strong>: igual ao do Financeiro, com <code>empresa</code>, <code>cnpj</code>, <code>origem</code>, <code>dataArquivo</code> e <code>usuario</code>.</li>
+    <li><strong>Identificação</strong>: fornecedor por CPF ou CNPJ, só dígitos (<code>11222333000181</code>). Nos contratos com o Estoque, o documento é opcional.</li>
+    <li><strong>Produto</strong>: SKU em maiúsculas, dígitos e hífen, até 40 caracteres (<code>NOTEBOOK-001</code>), a mesma regra do Estoque. Um SKU aparece uma vez por registro.</li>
+    <li><strong>Quantidades, valores e datas</strong>: quantidades inteiras e positivas; valores com ponto e duas casas (<code>3499.90</code>); datas no formato <code>AAAA-MM-DD</code>.</li>
+    <li><strong>Origem</strong>: o nome do setor no servidor da turma, em minúsculas (<code>compras</code>, <code>estoque</code>).</li>
+    <li><strong>Referência</strong>: o identificador do registro no Compras (<code>REC-1001-7</code> no recebimento, <code>PC-1001</code> na previsão). O par origem + referência identifica o registro, então reenviar o mesmo arquivo não duplica nada.</li>
+    <li><strong>Totalizador</strong>: <code>qtdRegistros</code> e <code>quantidadeTotal</code> (soma das quantidades) fecham cada envio.</li>
+  </ul>
+
+  <h2>Mudanças e dúvidas</h2>
+  <ul>
+    <li>Depois de combinado, um formato só muda com versão nova (outro número no namespace), e a versão anterior continua aceita.</li>
+    <li>Dúvidas e sugestões: mensagem privada para <code>#compras</code> no servidor da turma.</li>
+  </ul>
+
+  <h2>Referência rápida</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Mensagem</th><th>Sentido</th><th>Tipo</th><th>Namespace do elemento raiz</th></tr></thead>
+    <tbody>
+      <tr><td>Recebimento</td><td>Compras → Estoque</td><td>envio</td><td><code>urn:compras:recebimento:1.0</code></td></tr>
+      <tr><td>Confirmação de recebimento</td><td>Estoque → Compras</td><td>resposta</td><td><code>urn:compras:confirmacao-recebimento:1.0</code></td></tr>
+      <tr><td>Previsão de entrega</td><td>Compras → Estoque</td><td>envio</td><td><code>urn:compras:previsao-entrega:1.0</code></td></tr>
+      <tr><td>Disponibilidade de produto</td><td>Compras → Estoque</td><td>consulta</td><td>sem namespace (contrato do Patrimônio)</td></tr>
+    </tbody>
+  </table></div>
+</main>
+</body>
+</html>

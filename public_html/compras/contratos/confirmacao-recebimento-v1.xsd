@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Schema da confirmacao de recebimento, versao 1.0: a resposta do Estoque a
+  um movimento de Recebimento (recebimento-v1.xsd) enviado pelo Compras.
+
+  Mesmo modelo das respostas do Finanweb (pendencias-fornecedor-v1.xsd):
+  data da resposta, depois o resultado e o totalizador, ou <erro> no lugar
+  dos dois quando o arquivo inteiro nao pode ser processado. Cada resultado
+  aponta o recebimento pela mesma referencia que veio no envio.
+
+  Status de cada recebimento:
+    ACEITO      entrou no saldo como foi informado
+    DIVERGENTE  entrou com a quantidade contada pelo Estoque (ver divergencia)
+    REJEITADO   nada entrou (ver mensagem)
+    DUPLICADO   a referencia ja tinha sido processada antes; nada mudou
+
+  Regras de validacao (mesma numeracao dos schemas do Finanweb):
+    R2  status: enumeracao fechada ACEITO | DIVERGENTE | REJEITADO | DUPLICADO.
+    R4  datas: xs:date (AAAA-MM-DD).
+    R6  textos obrigatorios nao vazios e sem espaco nas pontas.
+    R7  origem: quem responde, em minusculas (estoque).
+    R8  referencia: a do recebimento no envio, sem espacos, ate 60.
+    R9  referencia unica dentro do arquivo.
+    R11 SKU: maiusculas, digitos e hifen, ate 40.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:c="urn:compras:confirmacao-recebimento:1.0"
+           targetNamespace="urn:compras:confirmacao-recebimento:1.0"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+
+  <!-- ===================== Tipos simples ===================== -->
+
+  <xs:simpleType name="textoLongo">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="500"/>
+      <xs:pattern value="\S(.*\S)?"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- R7 -->
+  <xs:simpleType name="identificadorSistema">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[a-z][a-z0-9\-]{1,29}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- R8 -->
+  <xs:simpleType name="referencia">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Za-z0-9][A-Za-z0-9._/\-]{0,59}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- R2 -->
+  <xs:simpleType name="statusConfirmacao">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="ACEITO"/>
+      <xs:enumeration value="DIVERGENTE"/>
+      <xs:enumeration value="REJEITADO"/>
+      <xs:enumeration value="DUPLICADO"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- R11 -->
+  <xs:simpleType name="sku">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z0-9]+(-[A-Z0-9]+)*"/>
+      <xs:maxLength value="40"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="quantidadeOuZero">
+    <xs:restriction base="xs:nonNegativeInteger">
+      <xs:maxInclusive value="2147483647"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- ===================== Tipos complexos ===================== -->
+
+  <xs:complexType name="divergencia">
+    <xs:sequence>
+      <xs:element name="sku" type="c:sku"/>                                 <!-- R11 -->
+      <xs:element name="quantidadeInformada" type="c:quantidadeOuZero"/>
+      <xs:element name="quantidadeContada" type="c:quantidadeOuZero"/>
+      <xs:element name="motivo" type="c:textoLongo" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- So os itens com problema; sem <divergencia>, todos ok. -->
+  <xs:complexType name="resultado">
+    <xs:sequence>
+      <xs:element name="divergencia" type="c:divergencia" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="mensagem" type="c:textoLongo" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="referencia" type="c:referencia" use="required"/>      <!-- R8 -->
+    <xs:attribute name="status" type="c:statusConfirmacao" use="required"/>   <!-- R2 -->
+  </xs:complexType>
+
+  <xs:complexType name="resultados">
+    <xs:sequence>
+      <xs:element name="resultado" type="c:resultado" minOccurs="1" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="totalizador">
+    <xs:sequence>
+      <xs:element name="qtdRegistros" type="xs:positiveInteger"/>
+      <xs:element name="qtdAceitos" type="xs:nonNegativeInteger"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- ===================== Elemento raiz ===================== -->
+
+  <xs:element name="confirmacaoRecebimento">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="origem" type="c:identificadorSistema"/>   <!-- R7 -->
+        <xs:element name="dataProcessamento" type="xs:date"/>       <!-- R4 -->
+        <xs:choice>
+          <xs:sequence>
+            <xs:element name="resultados" type="c:resultados"/>
+            <xs:element name="totalizador" type="c:totalizador"/>
+          </xs:sequence>
+          <xs:element name="erro" type="c:textoLongo"/>
+        </xs:choice>
+      </xs:sequence>
+      <xs:attribute name="versao" type="xs:string" use="required" fixed="1.0"/>
+    </xs:complexType>
+
+    <!-- R9 -->
+    <xs:unique name="referenciaUnica">
+      <xs:selector xpath="c:resultados/c:resultado"/>
+      <xs:field xpath="@referencia"/>
+    </xs:unique>
+  </xs:element>
+
+</xs:schema>

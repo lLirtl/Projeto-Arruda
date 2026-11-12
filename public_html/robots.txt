@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://lincka.com.br/sitemap.xml

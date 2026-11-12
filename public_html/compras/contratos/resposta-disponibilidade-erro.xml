@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<respostaDisponibilidade>
+  <idConsulta>CONS-COMPRAS-000001</idConsulta>
+  <produtoCodigo>MONITOR-001</produtoCodigo>
+  <erro>Produto nao encontrado</erro>
+</respostaDisponibilidade>

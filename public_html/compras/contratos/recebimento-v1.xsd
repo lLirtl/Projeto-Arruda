@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Schema do movimento de Recebimento, versao 1.0: o que chegou dos
+  fornecedores e o setor de Compras envia ao Estoque para dar entrada.
+
+  Mesmo modelo dos contratos do Finanweb (saida-v2.xsd): cabecalho ->
+  registros -> totalizador, referencia e status como atributos do registro,
+  e os tipos simples repetidos aqui para cada schema ser um arquivo unico.
+  Complementa o estoque.xsd v2 do Estoque, que so recebe SKU e quantidade:
+  aqui vai tambem fornecedor, nota fiscal, quantidade pedida, custo, avaria
+  e lote.
+
+  Cada recebimento e uma baixa feita no Compras (um pedido pode ter varias).
+  O status fala da entrega do pedido:
+    TOTAL      o pedido terminou de chegar com este recebimento
+    PARCIAL    ainda falta entrega deste pedido
+    CANCELADO  recebimento lancado por engano; o Estoque ignora o registro
+
+  O Estoque responde com o confirmacao-recebimento-v1.xsd.
+
+  Regras de validacao (mesma numeracao dos schemas do Finanweb):
+    R1  documento do fornecedor: so digitos, 11 (CPF) ou 14 (CNPJ). Opcional.
+    R2  status: enumeracao fechada TOTAL | PARCIAL | CANCELADO.
+    R3  valores monetarios: decimal de ate 14 digitos, 2 casas, nao negativo.
+    R4  datas: xs:date (AAAA-MM-DD).
+    R6  estrutura: cabecalho -> recebimentos -> totalizador, nessa ordem; ao
+        menos um recebimento, cada um com ao menos um item; textos
+        obrigatorios nao vazios e sem espaco nas pontas.
+    R7  origem: letras minusculas, digitos e hifen, comecando por letra.
+    R8  referencia: obrigatoria, sem espacos, ate 60 caracteres. O par
+        origem + referencia identifica o recebimento: reenviar nao duplica.
+    R9  referencia unica dentro do arquivo.
+    R11 SKU: maiusculas, digitos e hifen, ate 40 (mesma regra do estoque.xsd).
+    R12 quantidades: inteiro positivo.
+    R13 o mesmo SKU nao se repete dentro de um recebimento.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:r="urn:compras:recebimento:1.0"
+           targetNamespace="urn:compras:recebimento:1.0"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+
+  <!-- ===================== Tipos simples ===================== -->
+
+  <!-- R6: texto obrigatorio. Nao pode ser vazio nem ter espaco no inicio/fim. -->
+  <xs:simpleType name="textoObrigatorio">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="120"/>
+      <xs:pattern value="\S(.*\S)?"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- R6: texto longo (observacoes), mesma regra, ate 500 caracteres. -->
+  <xs:simpleType name="textoLongo">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="500"/>
+      <xs:pattern value="\S(.*\S)?"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- R1: CPF (11 digitos) ou CNPJ (14 digitos), so numeros. -->
+  <xs:simpleType name="documentoParceiro">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\d{11}|\d{14}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- R1: CNPJ da empresa emissora, 14 digitos. -->
+  <xs:simpleType name="cnpj">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\d{14}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- R7: nome do sistema de origem, o mesmo do servidor da turma. -->
+  <xs:simpleType name="identificadorSistema">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[a-z][a-z0-9\-]{1,29}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- R8: identificador do registro no sistema de origem. -->
+  <xs:simpleType name="referencia">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Za-z0-9][A-Za-z0-9._/\-]{0,59}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- R2: status da entrega do pedido (ver significado no topo). -->
+  <xs:simpleType name="statusRecebimento">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="TOTAL"/>
+      <xs:enumeration value="PARCIAL"/>
+      <xs:enumeration value="CANCELADO"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- R3: valor monetario = Decimal(14,2), nao negativo. -->
+  <xs:simpleType name="valorMonetario">
+    <xs:restriction base="xs:decimal">
+      <xs:totalDigits value="14"/>
+      <xs:fractionDigits value="2"/>
+      <xs:minInclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- R11: SKU, ex.: NOTEBOOK-001. -->
+  <xs:simpleType name="sku">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z0-9]+(-[A-Z0-9]+)*"/>
+      <xs:maxLength value="40"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- R12: quantidade inteira positiva que cabe em integer do PostgreSQL. -->
+  <xs:simpleType name="quantidade">
+    <xs:restriction base="xs:positiveInteger">
+      <xs:maxInclusive value="2147483647"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- Codigo de barras GTIN/EAN: 8, 12, 13 ou 14 digitos. -->
+  <xs:simpleType name="ean">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\d{8}|\d{12,14}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="unidade">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="UN"/><xs:enumeration value="CX"/><xs:enumeration value="PCT"/>
+      <xs:enumeration value="KG"/><xs:enumeration value="G"/><xs:enumeration value="L"/>
+      <xs:enumeration value="ML"/><xs:enumeration value="M"/><xs:enumeration value="PAR"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- Mesmos valores do products.finalidade do Estoque. -->
+  <xs:simpleType name="finalidade">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="VENDA"/>
+      <xs:enumeration value="USO_INTERNO"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- Cuidado que o Estoque precisa ter ao guardar. -->
+  <xs:simpleType name="armazenagem">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="AMBIENTE"/><xs:enumeration value="REFRIGERADO"/>
+      <xs:enumeration value="CONGELADO"/><xs:enumeration value="FRAGIL"/>
+      <xs:enumeration value="INFLAMAVEL"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="motivoAvaria">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="QUEBRADO"/><xs:enumeration value="VENCIDO"/>
+      <xs:enumeration value="EMBALAGEM_VIOLADA"/><xs:enumeration value="PRODUTO_ERRADO"/>
+      <xs:enumeration value="OUTRO"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="numeroNotaFiscal">
+    <xs:restriction base="xs:string"><xs:pattern value="\d{1,9}"/></xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="serieNotaFiscal">
+    <xs:restriction base="xs:string"><xs:pattern value="\d{1,3}"/></xs:restriction>
+  </xs:simpleType>
+
+  <!-- Chave de acesso da NF-e: 44 digitos. -->
+  <xs:simpleType name="chaveAcesso">
+    <xs:restriction base="xs:string"><xs:pattern value="\d{44}"/></xs:restriction>
+  </xs:simpleType>
+
+  <!-- ===================== Tipos complexos ===================== -->
+
+  <xs:complexType name="cabecalho">
+    <xs:sequence>
+      <xs:element name="empresa" type="r:textoObrigatorio"/>
+      <xs:element name="cnpj" type="r:cnpj"/>
+      <xs:element name="origem" type="r:identificadorSistema"/>  <!-- R7 -->
+      <xs:element name="dataArquivo" type="xs:date"/>            <!-- R4 -->
+      <xs:element name="usuario" type="r:textoObrigatorio"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Nome do fornecedor no conteudo, documento (R1) como atributo opcional. -->
+  <xs:complexType name="fornecedor">
+    <xs:simpleContent>
+      <xs:extension base="r:textoObrigatorio">
+        <xs:attribute name="documento" type="r:documentoParceiro" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="notaFiscal">
+    <xs:sequence>
+      <xs:element name="numero" type="r:numeroNotaFiscal"/>
+      <xs:element name="serie" type="r:serieNotaFiscal" minOccurs="0"/>
+      <xs:element name="chaveAcesso" type="r:chaveAcesso" minOccurs="0"/>
+      <xs:element name="dataEmissao" type="xs:date" minOccurs="0"/>   <!-- R4 -->
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Chegou, mas nao entra no saldo. -->
+  <xs:complexType name="avaria">
+    <xs:sequence>
+      <xs:element name="quantidade" type="r:quantidade"/>             <!-- R12 -->
+      <xs:element name="motivo" type="r:motivoAvaria"/>
+      <xs:element name="descricao" type="r:textoLongo" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="lote">
+    <xs:sequence>
+      <xs:element name="codigo" type="r:textoObrigatorio"/>
+      <xs:element name="dataFabricacao" type="xs:date" minOccurs="0"/>  <!-- R4 -->
+      <xs:element name="dataValidade" type="xs:date" minOccurs="0"/>    <!-- R4 -->
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Produto e quantidade sao o nucleo; o resto ajuda a conferencia. -->
+  <xs:complexType name="item">
+    <xs:sequence>
+      <xs:element name="sku" type="r:sku"/>                                  <!-- R11 -->
+      <xs:element name="produto" type="r:textoObrigatorio"/>
+      <xs:element name="unidade" type="r:unidade" minOccurs="0"/>
+      <xs:element name="ean" type="r:ean" minOccurs="0"/>
+      <xs:element name="finalidade" type="r:finalidade" minOccurs="0"/>
+      <xs:element name="armazenagem" type="r:armazenagem" minOccurs="0"/>
+      <!-- Quantidade boa, que entra no saldo. -->
+      <xs:element name="quantidade" type="r:quantidade"/>                    <!-- R12 -->
+      <!-- Quanto faltava chegar deste item antes desta baixa. -->
+      <xs:element name="quantidadePedida" type="r:quantidade" minOccurs="0"/> <!-- R12 -->
+      <xs:element name="custoUnitario" type="r:valorMonetario" minOccurs="0"/> <!-- R3 -->
+      <xs:element name="avaria" type="r:avaria" minOccurs="0"/>
+      <xs:element name="lote" type="r:lote" minOccurs="0"/>
+      <!-- Sugestao de onde guardar; o Estoque decide. -->
+      <xs:element name="localizacaoSugerida" type="r:textoObrigatorio" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- R6: pelo menos um item. -->
+  <xs:complexType name="itens">
+    <xs:sequence>
+      <xs:element name="item" type="r:item" minOccurs="1" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="recebimento">
+    <xs:sequence>
+      <xs:element name="pedido" type="r:referencia"/>                   <!-- R8 -->
+      <xs:element name="fornecedor" type="r:fornecedor"/>
+      <xs:element name="dataRecebimento" type="xs:date"/>              <!-- R4 -->
+      <xs:element name="notaFiscal" type="r:notaFiscal" minOccurs="0"/>
+      <xs:element name="conferente" type="r:textoObrigatorio" minOccurs="0"/>
+      <xs:element name="itens" type="r:itens"/>
+      <xs:element name="observacao" type="r:textoLongo" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="referencia" type="r:referencia" use="required"/>       <!-- R8 -->
+    <xs:attribute name="status" type="r:statusRecebimento" use="required"/>    <!-- R2 -->
+  </xs:complexType>
+
+  <!-- R6: pelo menos um recebimento, sem limite superior. -->
+  <xs:complexType name="recebimentos">
+    <xs:sequence>
+      <xs:element name="recebimento" type="r:recebimento" minOccurs="1" maxOccurs="unbounded">
+        <!-- R13: o mesmo SKU nao aparece duas vezes no recebimento. -->
+        <xs:unique name="skuUnicoNoRecebimento">
+          <xs:selector xpath="r:itens/r:item"/>
+          <xs:field xpath="r:sku"/>
+        </xs:unique>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- quantidadeTotal = soma das <quantidade> dos itens (sem as avarias). -->
+  <xs:complexType name="totalizador">
+    <xs:sequence>
+      <xs:element name="qtdRegistros" type="xs:positiveInteger"/>
+      <xs:element name="quantidadeTotal" type="xs:positiveInteger"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- ===================== Elemento raiz ===================== -->
+
+  <xs:element name="movimento">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="cabecalho" type="r:cabecalho"/>
+        <xs:element name="recebimentos" type="r:recebimentos"/>
+        <xs:element name="totalizador" type="r:totalizador"/>
+      </xs:sequence>
+      <xs:attribute name="versao" type="xs:string" use="required" fixed="1.0"/>
+      <xs:attribute name="tipo" type="xs:string" use="required" fixed="RECEBIMENTO"/>
+    </xs:complexType>
+
+    <!-- R9: o mesmo recebimento nao aparece duas vezes no arquivo. -->
+    <xs:unique name="referenciaUnica">
+      <xs:selector xpath="r:recebimentos/r:recebimento"/>
+      <xs:field xpath="@referencia"/>
+    </xs:unique>
+  </xs:element>
+
+</xs:schema>

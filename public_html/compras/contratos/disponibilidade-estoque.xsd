@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Consulta de disponibilidade no Estoque, usada pelo Compras.
+
+  E o mesmo formato que o Estoque ja responde ao Patrimonio (contrato
+  patrimonio-estoque.xsd do Patrimonio), sem namespace, para o Estoque nao
+  precisar implementar nada novo. Este arquivo descreve so as duas raizes que
+  o Compras usa: <consultaDisponibilidade> e <respostaDisponibilidade>.
+
+  A consulta nao reserva nem movimenta o saldo. O Estoque copia idConsulta e
+  produtoCodigo na resposta e manda <produto> ou <erro>, nunca os dois.
+  Uma resposta identica reenviada nao muda nada; uma resposta diferente para
+  a mesma consulta e recusada pelo Compras (gere outra consulta).
+
+  Regras:
+    D1  idConsulta e produtoCodigo obrigatorios, nao vazios.
+    D2  quantidadeDisponivel: inteiro maior ou igual a zero.
+    D3  resposta: <produto> ou <erro>, nunca os dois.
+    D4  XML com DTD ou entidades externas nao e aceito.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="unqualified">
+
+  <xs:simpleType name="textoObrigatorio">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="120"/>
+      <xs:pattern value="\S(.*\S)?"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="produto">
+    <xs:sequence>
+      <xs:element name="nome" type="textoObrigatorio"/>
+      <xs:element name="quantidadeDisponivel" type="xs:nonNegativeInteger"/>  <!-- D2 -->
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="consultaDisponibilidade">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="idConsulta" type="textoObrigatorio"/>     <!-- D1 -->
+        <xs:element name="produtoCodigo" type="textoObrigatorio"/>  <!-- D1 -->
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="respostaDisponibilidade">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="idConsulta" type="textoObrigatorio"/>
+        <xs:element name="produtoCodigo" type="textoObrigatorio"/>
+        <xs:choice>                                                 <!-- D3 -->
+          <xs:element name="produto" type="produto"/>
+          <xs:element name="erro" type="textoObrigatorio"/>
+        </xs:choice>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>

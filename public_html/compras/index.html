@@ -1,0 +1,3078 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Controle de Compras</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: light;
+    --ink:#14283c; --ink-2:#1c3550; --ink-tx:#c9d4df; --ink-faint:#7f93a8;
+    --accent:#f2b705; --accent-2:#d9a300; --accent-tx:#1d1600;
+    --bg:#f3f5f4; --panel:#ffffff; --panel-2:#f8f9f9;
+    --text:#1b2430; --muted:#5e6b78; --faint:#8a95a1;
+    --border:#d9dfe3; --line:#e9edf0; --hover:#f4f7f9;
+    --focus:#2f6db3;
+    --amber-bg:#fff2cf; --amber-tx:#7a5200;
+    --green-bg:#e1f3e8; --green-tx:#1d6b3d;
+    --red-bg:#fde6e3; --red-tx:#a12b1f;
+    --blue-bg:#e3edf8; --blue-tx:#1f4f80;
+    --slate-bg:#ebeff2; --slate-tx:#45525e;
+    --shadow:0 12px 40px rgba(20,40,60,.18);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --ink:#0d1a27; --ink-2:#16283b;
+      --bg:#10161d; --panel:#161f29; --panel-2:#1a2430;
+      --text:#e4e9ef; --muted:#9ba7b3; --faint:#717d8a;
+      --border:#283545; --line:#202b37; --hover:#1c2733;
+      --focus:#6aa5e8;
+      --amber-bg:#3a2e0b; --amber-tx:#f5cf6b;
+      --green-bg:#123522; --green-tx:#7fd6a1;
+      --red-bg:#3d1916; --red-tx:#f3a097;
+      --blue-bg:#14304d; --blue-tx:#9cc4ef;
+      --slate-bg:#222d39; --slate-tx:#b3bfcb;
+      --shadow:0 12px 40px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --ink:#0d1a27; --ink-2:#16283b;
+    --bg:#10161d; --panel:#161f29; --panel-2:#1a2430;
+    --text:#e4e9ef; --muted:#9ba7b3; --faint:#717d8a;
+    --border:#283545; --line:#202b37; --hover:#1c2733;
+    --focus:#6aa5e8;
+    --amber-bg:#3a2e0b; --amber-tx:#f5cf6b;
+    --green-bg:#123522; --green-tx:#7fd6a1;
+    --red-bg:#3d1916; --red-tx:#f3a097;
+    --blue-bg:#14304d; --blue-tx:#9cc4ef;
+    --slate-bg:#222d39; --slate-tx:#b3bfcb;
+    --shadow:0 12px 40px rgba(0,0,0,.5);
+  }
+
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  html,body{height:100%}
+  body{margin:0;font-family:'Archivo',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+    font-stretch:100%;color:var(--text);background:var(--bg);font-size:14px;line-height:1.5;
+    -webkit-font-smoothing:antialiased}
+  .num,td,.kpi b{font-variant-numeric:tabular-nums}
+  :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+  /* ---------- layout ---------- */
+  .app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
+  .side{background:var(--ink);color:var(--ink-tx);display:flex;flex-direction:column;
+    position:sticky;top:0;height:100vh;padding:18px 12px}
+  .brand{display:flex;align-items:center;gap:10px;padding:4px 8px 18px}
+  .brand-mark{width:30px;height:30px;border-radius:7px;background:var(--accent);color:var(--accent-tx);
+    display:grid;place-items:center;flex:none}
+  .brand-mark svg{width:18px;height:18px}
+  .brand b{display:block;color:#fff;font-size:15px;font-stretch:87%;font-weight:700;line-height:1.1}
+  .brand span{font-size:11.5px;color:var(--ink-faint)}
+  .nav{flex:1;overflow:auto;margin:0 -4px;padding:0 4px}
+  .nav-group{font-size:11.5px;color:var(--ink-faint);padding:14px 10px 6px}
+  .nav-item{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;color:var(--ink-tx);
+    font:inherit;font-size:13.5px;text-align:left;padding:8px 10px;border-radius:7px;cursor:pointer;position:relative}
+  .nav-item svg{width:17px;height:17px;flex:none;opacity:.8}
+  .nav-item:hover{background:var(--ink-2);color:#fff}
+  .nav-item.active{background:var(--ink-2);color:#fff;font-weight:600}
+  .nav-item.active::before{content:"";position:absolute;left:-4px;top:7px;bottom:7px;width:3px;border-radius:3px;background:var(--accent)}
+  .nav-item .count{margin-left:auto;font-size:11px;font-weight:600;background:var(--accent);color:var(--accent-tx);
+    border-radius:999px;padding:0 7px;min-width:20px;text-align:center;line-height:18px}
+  .nav-item .count[hidden]{display:none}
+  .side-foot{border-top:1px solid var(--ink-2);padding:12px 6px 0;display:flex;flex-direction:column;gap:8px}
+  .side-foot .badge{align-self:flex-start}
+  .theme-btn{display:flex;align-items:center;gap:8px;border:0;background:none;color:var(--ink-faint);font:inherit;
+    font-size:12.5px;cursor:pointer;padding:4px 0}
+  .theme-btn:hover{color:#fff}
+  .theme-btn svg{width:15px;height:15px}
+
+  .topbar{display:none}
+  main{padding:28px 36px 64px;min-width:0;max-width:1240px;width:100%}
+
+  /* ---------- cabeçalho de página ---------- */
+  .page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+  h1{font-size:26px;font-stretch:87%;font-weight:700;letter-spacing:-.01em;margin:0 0 2px;line-height:1.15}
+  .sub{color:var(--muted);font-size:13.5px;max-width:72ch}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+  details.help{margin:-4px 0 18px;color:var(--muted);font-size:13px}
+  details.help summary{cursor:pointer;color:var(--text);font-weight:500;width:max-content;list-style:none;display:flex;align-items:center;gap:6px}
+  details.help summary::-webkit-details-marker{display:none}
+  details.help summary::before{content:"";width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(-45deg);transition:transform .15s}
+  details.help[open] summary::before{transform:rotate(45deg)}
+  details.help .help-body{margin-top:8px;padding:12px 14px;background:var(--panel);border:1px solid var(--line);border-radius:8px;max-width:86ch}
+  details.help p{margin:0 0 6px}
+  details.help p:last-child{margin:0}
+  details.help a{color:var(--focus)}
+
+  /* ---------- botões ---------- */
+  button{font-family:inherit}
+  .btn{font-size:13px;font-weight:500;cursor:pointer;border-radius:7px;padding:8px 13px;border:1px solid var(--border);
+    background:var(--panel);color:var(--text);display:inline-flex;align-items:center;gap:7px;white-space:nowrap;line-height:1.2}
+  .btn:hover{background:var(--hover)}
+  .btn svg{width:15px;height:15px;flex:none}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-tx);font-weight:600}
+  .btn.primary:hover{background:var(--accent-2);border-color:var(--accent-2)}
+  .btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+  .btn.ghost:hover{background:var(--hover);color:var(--text)}
+  .btn.sm{padding:5px 9px;font-size:12.5px}
+  .btn.danger{color:var(--red-tx)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .acts{display:flex;gap:4px;justify-content:flex-end;flex-wrap:nowrap}
+  .act{border:0;background:none;font:inherit;font-size:12.5px;color:var(--focus);cursor:pointer;padding:4px 6px;border-radius:5px;white-space:nowrap}
+  .act:hover{background:var(--hover)}
+  .act.red{color:var(--red-tx)}
+  .act.muted{color:var(--muted)}
+
+  /* menu suspenso */
+  .menu{position:relative}
+  .menu-list{position:absolute;right:0;top:calc(100% + 6px);min-width:260px;background:var(--panel);border:1px solid var(--border);
+    border-radius:9px;box-shadow:var(--shadow);padding:6px;z-index:30}
+  .menu-list[hidden]{display:none}
+  .menu-list button{display:block;width:100%;text-align:left;border:0;background:none;color:var(--text);font-size:13px;
+    padding:8px 10px;border-radius:6px;cursor:pointer}
+  .menu-list button:hover{background:var(--hover)}
+  .menu-list button small{display:block;color:var(--muted);font-size:11.5px;margin-top:1px}
+  .menu-list hr{border:0;border-top:1px solid var(--line);margin:5px 4px}
+
+  /* ---------- faixa de indicadores ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));background:var(--panel);
+    border:1px solid var(--border);border-radius:10px;margin-bottom:18px;overflow:hidden}
+  .kpi{padding:14px 18px;border-left:1px solid var(--line)}
+  .kpi:first-child{border-left:0}
+  .kpi b{display:block;font-size:26px;font-stretch:80%;font-weight:700;line-height:1.1;letter-spacing:-.01em}
+  .kpi span{font-size:12.5px;color:var(--muted)}
+  .kpi.warn b{color:var(--amber-tx)}
+  .kpi.bad b{color:var(--red-tx)}
+
+  /* ---------- painel e tabela ---------- */
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .toolbar .grow{flex:1}
+  .search{position:relative;flex:1;min-width:200px;max-width:340px}
+  .search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--faint);pointer-events:none}
+  .search input{padding-left:32px}
+  .toolbar select{width:auto;min-width:150px}
+  .toolbar .meta{color:var(--muted);font-size:12.5px}
+  .table-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse}
+  th{text-align:left;font-weight:500;color:var(--muted);font-size:12px;padding:10px 14px;border-bottom:1px solid var(--line);
+    background:var(--panel-2);white-space:nowrap}
+  td{padding:12px 14px;border-bottom:1px solid var(--line);font-size:13.5px;vertical-align:middle}
+  tbody tr:last-child td{border-bottom:0}
+  tbody tr:hover td{background:var(--hover)}
+  td.r,th.r{text-align:right;white-space:nowrap}
+  .code{font-family:inherit;font-stretch:87%;font-weight:600;color:var(--text);letter-spacing:.01em;white-space:nowrap}
+  .dim{color:var(--muted)}
+  .faint{color:var(--faint)}
+  .small{font-size:12px}
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap}
+  .b-amber{background:var(--amber-bg);color:var(--amber-tx)}
+  .b-green{background:var(--green-bg);color:var(--green-tx)}
+  .b-slate{background:var(--slate-bg);color:var(--slate-tx)}
+  .b-blue{background:var(--blue-bg);color:var(--blue-tx)}
+  .b-red{background:var(--red-bg);color:var(--red-tx)}
+  .progress{height:6px;background:var(--line);border-radius:999px;overflow:hidden;width:72px;flex:none}
+  .progress > i{display:block;height:100%;background:var(--focus);border-radius:999px}
+  .progress.done > i{background:var(--green-tx)}
+  .prog{display:flex;align-items:center;gap:8px;white-space:nowrap}
+  .rq{width:74px!important;padding:6px 8px!important}
+  .msg{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;word-break:break-all}
+  .xml-view{margin:0;max-height:62vh;overflow:auto;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.55;white-space:pre;color:var(--text)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .chip{font-size:12px;text-decoration:none;color:var(--focus);border:1px solid var(--border);border-radius:6px;padding:2px 8px;background:var(--panel)}
+  .chip:hover{border-color:var(--focus)}
+  a.act{text-decoration:none;display:inline-block}
+
+  .empty{text-align:center;padding:44px 20px;color:var(--muted)}
+  .empty svg{width:34px;height:34px;color:var(--faint);margin-bottom:8px}
+  .empty b{display:block;color:var(--text);font-size:14.5px;margin-bottom:2px}
+  .empty p{margin:0 auto 14px;max-width:46ch;font-size:13px}
+  .empty[hidden]{display:none}
+
+  .seg{display:inline-flex;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:3px;margin-bottom:14px;gap:2px;flex-wrap:wrap}
+  .seg button{border:0;background:none;font:inherit;font-size:13px;color:var(--muted);padding:6px 12px;border-radius:6px;cursor:pointer}
+  .seg button.on{background:var(--ink);color:#fff;font-weight:600}
+  .seg button .count{font-size:11px;margin-left:4px;opacity:.75}
+
+  .note{padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted);background:var(--panel-2)}
+  .note.warn{background:var(--amber-bg);color:var(--amber-tx)}
+  .note strong{color:inherit}
+
+  /* ---------- formulários ---------- */
+  .field{margin-bottom:14px}
+  label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px;font-weight:500}
+  input,select{width:100%;font-family:inherit;font-size:13.5px;padding:8px 10px;border:1px solid var(--border);border-radius:7px;
+    background:var(--panel);color:var(--text)}
+  input:focus,select:focus{outline:2px solid var(--focus);outline-offset:-1px;border-color:transparent}
+  input[type=checkbox]{width:16px;height:16px;padding:0;accent-color:var(--ink)}
+  .grid{display:grid;gap:10px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:1fr 1fr 1fr}
+  .item-head,.item-row{display:grid;grid-template-columns:1fr 1.7fr .7fr .9fr 30px;gap:8px;align-items:center}
+  .item-head{color:var(--muted);font-size:11.5px;margin-bottom:6px}
+  .item-row + .item-row{margin-top:8px}
+  .item-row .rm{border:0;background:none;color:var(--red-tx);font-size:20px;line-height:1;cursor:pointer;padding:4px;border-radius:5px}
+  .item-row .rm:hover{background:var(--red-bg)}
+  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+
+  /* ---------- modal ---------- */
+  .overlay{position:fixed;inset:0;background:rgba(10,20,30,.45);display:none;align-items:flex-start;justify-content:center;
+    padding:56px 16px;overflow:auto;z-index:50}
+  .overlay.on{display:flex}
+  .modal{background:var(--panel);border-radius:12px;width:100%;max-width:680px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .modal.sm{max-width:460px}
+  .modal.lg{max-width:920px}
+  .modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 22px 4px}
+  .modal-head h2{margin:0;font-size:19px;font-stretch:87%;font-weight:700}
+  .x{border:0;background:none;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;padding:4px 8px;border-radius:6px}
+  .x:hover{background:var(--hover);color:var(--text)}
+  .modal-body{padding:14px 22px 6px}
+  .modal-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 22px 18px;border-top:1px solid var(--line);margin-top:6px;flex-wrap:wrap}
+  .modal-foot.end{justify-content:flex-end}
+  .total{font-weight:700;font-size:15px}
+  .btns{display:flex;gap:8px;flex-wrap:wrap}
+
+  /* ---------- toasts ---------- */
+  .toasts{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:8px;z-index:80;max-width:min(420px,calc(100vw - 40px))}
+  .toast{background:var(--ink);color:#fff;padding:11px 14px 11px 14px;border-radius:9px;font-size:13px;box-shadow:var(--shadow);
+    border-left:4px solid var(--ink-faint);opacity:0;transform:translateY(6px);transition:.2s}
+  .toast.on{opacity:1;transform:none}
+  .toast.ok{border-left-color:#5fcf8c}
+  .toast.erro{border-left-color:#f07a6c}
+  .toast.info{border-left-color:var(--accent)}
+
+  /* ---------- responsivo ---------- */
+  @media (max-width: 900px){
+    .app{grid-template-columns:1fr}
+    .side{position:fixed;inset:0 auto 0 0;width:260px;z-index:60;transform:translateX(-100%);transition:transform .2s}
+    body.nav-open .side{transform:none}
+    body.nav-open::after{content:"";position:fixed;inset:0;background:rgba(10,20,30,.45);z-index:55}
+    .topbar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--ink);color:#fff;position:sticky;top:0;z-index:40}
+    .topbar b{font-stretch:87%;font-size:15px;flex:1}
+    .topbar .burger{border:0;background:none;color:#fff;padding:6px;cursor:pointer;border-radius:6px}
+    .topbar .burger svg{width:22px;height:22px;display:block}
+    main{padding:20px 14px 60px}
+    h1{font-size:22px}
+    .kpi b{font-size:21px;white-space:nowrap}
+    .kpi{padding:12px 14px}
+    .g2,.g3{grid-template-columns:1fr}
+    .item-head{display:none}
+    .item-row{grid-template-columns:1fr 1fr 30px;padding:10px;border:1px solid var(--line);border-radius:8px}
+    .item-row .i-nome{grid-column:1 / -1;order:-1}
+    .kpi{border-left:0;border-top:1px solid var(--line)}
+    .kpis{grid-template-columns:1fr 1fr}
+    .kpi:nth-child(-n+2){border-top:0}
+    .kpi:nth-child(even){border-left:1px solid var(--line)}
+    .search{max-width:none}
+    .page-head .actions{width:100%}
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h11v10H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
+    <symbol id="i-shelf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V3M21 21V3M3 12h18M3 21h18"/><path d="M6 12V8h4v4M13 21v-5h5v5M7 21v-3h3v3"/></symbol>
+    <symbol id="i-swap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7H5a2 2 0 0 1 0-4h13v4"/><path d="M3 5v14a2 2 0 0 0 2 2h15V7"/><path d="M16 14h.01"/></symbol>
+    <symbol id="i-plug" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0zM12 18v4"/></symbol>
+    <symbol id="i-table" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-io" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 11l4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></symbol>
+    <symbol id="i-inbox" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  </defs>
+</svg>
+
+<div class="topbar">
+  <button class="burger" id="btn-burger" aria-label="Abrir menu"><svg><use href="#i-menu"/></svg></button>
+  <b>Controle de Compras</b>
+</div>
+
+<div class="app">
+<aside class="side" aria-label="Menu principal">
+  <div class="brand">
+    <div class="brand-mark"><svg><use href="#i-box"/></svg></div>
+    <div><b>Controle de Compras</b><span>Setor de compras</span></div>
+  </div>
+  <nav class="nav">
+    <div class="nav-group">Operação</div>
+    <button class="nav-item active" data-view="pedidos"><svg><use href="#i-doc"/></svg>Pedidos<span class="count" id="cnt-pedidos" hidden></span></button>
+    <button class="nav-item" data-view="recebimentos"><svg><use href="#i-truck"/></svg>Recebimentos<span class="count" id="cnt-receb" hidden></span></button>
+    <button class="nav-item" data-view="estoque"><svg><use href="#i-shelf"/></svg>Estoque<span class="count" id="cnt-estoque" hidden></span></button>
+    <button class="nav-item" data-view="movimentacoes"><svg><use href="#i-swap"/></svg>Movimentações</button>
+    <div class="nav-group">Cadastros</div>
+    <button class="nav-item" data-view="fornecedores"><svg><use href="#i-users"/></svg>Fornecedores</button>
+    <div class="nav-group">Integrações</div>
+    <button class="nav-item" data-view="financeiro"><svg><use href="#i-wallet"/></svg>Financeiro</button>
+    <button class="nav-item" data-view="integracao"><svg><use href="#i-plug"/></svg>Socket</button>
+    <button class="nav-item" data-view="importados"><svg><use href="#i-table"/></svg>CSV importados</button>
+    <div class="nav-group">Sistema</div>
+    <button class="nav-item" data-view="logs"><svg><use href="#i-list"/></svg>Logs</button>
+  </nav>
+  <div class="side-foot">
+    <span id="sock-pill" class="badge b-slate">Socket: Desconectado</span>
+    <button class="theme-btn" id="btn-tema"><svg><use href="#i-moon"/></svg><span id="tema-label">Tema: automático</span></button>
+  </div>
+</aside>
+
+<main>
+  <!-- ================= PEDIDOS ================= -->
+  <section id="v-pedidos">
+    <div class="page-head">
+      <div>
+        <h1>Pedidos de compra</h1>
+        <div class="sub">Acompanhe cada pedido do pagamento à entrega.</div>
+      </div>
+      <div class="actions">
+        <div class="menu">
+          <button class="btn" data-menu><svg><use href="#i-io"/></svg>Importar e exportar<svg><use href="#i-down"/></svg></button>
+          <div class="menu-list" hidden>
+            <button id="btn-import">Importar CSV do Estoque<small>Colunas SKU, Nome, Quantidade, Preço, Fornecedor</small></button>
+            <button id="btn-modelo-estoque">Baixar modelo do CSV<small>Exemplo pronto para preencher</small></button>
+            <hr>
+            <button id="btn-export">Exportar pedidos (CSV)<small>Uma linha por pedido, itens em colunas</small></button>
+            <button id="btn-export-tudo">Exportar todos os itens (CSV)<small>Pedidos, recebimentos, movimentações e importados</small></button>
+          </div>
+        </div>
+        <button class="btn primary" id="btn-new"><svg><use href="#i-plus"/></svg>Novo pedido</button>
+      </div>
+    </div>
+    <div class="kpis" id="kpi-pedidos"></div>
+    <div class="panel">
+      <div class="toolbar">
+        <label class="search"><svg><use href="#i-search"/></svg><input id="fp-q" type="search" placeholder="Buscar por nº, fornecedor ou produto" aria-label="Buscar pedidos"></label>
+        <select id="fp-fin" aria-label="Filtrar por financeiro">
+          <option value="">Financeiro: todos</option><option>Pendente</option><option>Aprovado</option><option>Pago</option>
+        </select>
+        <select id="fp-log" aria-label="Filtrar por logística">
+          <option value="">Logística: todas</option><option>Aguardando</option><option>Em trânsito</option><option>Parcial</option><option>Recebido</option>
+        </select>
+        <span class="grow"></span><span class="meta" id="fp-meta"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Nº</th><th>Fornecedor</th><th class="r">Itens</th><th class="r">Valor</th><th>Recebido</th><th>Entrega</th>
+            <th>Financeiro</th><th>Logística</th><th></th>
+          </tr></thead>
+          <tbody id="tb-pedidos"></tbody>
+        </table>
+      </div>
+      <div id="empty-pedidos" class="empty" hidden>
+        <svg><use href="#i-inbox"/></svg><b>Nenhum pedido por aqui</b>
+        <p id="empty-pedidos-txt">Crie o primeiro pedido ou importe o CSV enviado pelo Estoque.</p>
+        <button class="btn primary" data-go-new><svg><use href="#i-plus"/></svg>Novo pedido</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= RECEBIMENTOS ================= -->
+  <section id="v-recebimentos" hidden>
+    <div class="page-head">
+      <div>
+        <h1>Recebimentos</h1>
+        <div class="sub">Dê baixa no que chegou, item a item. Recebimento parcial é permitido.</div>
+      </div>
+      <div class="actions">
+        <div class="menu">
+          <button class="btn" data-menu><svg><use href="#i-io"/></svg>Exportar<svg><use href="#i-down"/></svg></button>
+          <div class="menu-list" hidden>
+            <button id="btn-export-entrada">Entrada p/ Estoque (CSV)<small>Produto;Quantidade, total já recebido</small></button>
+            <button id="btn-sock-entrada">Entrada p/ Estoque via socket<small>Mesmo conteúdo, em JSON de uma linha</small></button>
+            <hr>
+            <button id="btn-export-registros">Registros recebidos (CSV)<small>Uma linha por pedido, itens em colunas</small></button>
+          </div>
+        </div>
+        <button class="btn primary" id="fr-enviar"><svg><use href="#i-send"/></svg>Enviar pendentes ao Estoque</button>
+      </div>
+    </div>
+    <details class="help"><summary>Como funciona</summary><div class="help-body">
+      <p>Informe a quantidade que chegou e clique em <strong>Receber</strong>. Com <strong>Dar entrada no saldo do Estoque ao receber</strong> marcado, a baixa vai na hora para a API do Estoque (XML v2, como compra) e o saldo é atualizado. Se o Estoque recusar ou estiver fora do ar, a entrada fica pendente e você reenvia em <strong>Enviar pendentes ao Estoque</strong>.</p>
+      <p>O CSV <strong>Produto;Quantidade</strong> continua disponível em Exportar, no formato combinado com o Estoque.</p>
+    </div></details>
+    <div class="panel">
+      <div class="toolbar">
+        <label class="search"><svg><use href="#i-search"/></svg><input id="fr-q" type="search" placeholder="Buscar por pedido, fornecedor ou produto" aria-label="Buscar itens a receber"></label>
+        <label class="small" style="display:flex;align-items:center;gap:6px;margin:0;color:var(--text)"><input type="checkbox" id="fr-auto" checked> Dar entrada no saldo do Estoque ao receber</label>
+        <span class="grow"></span><span class="meta" id="fr-meta"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Pedido</th><th>Fornecedor</th><th>SKU</th><th>Produto</th><th>Recebido</th><th>Entrega</th><th>Receber agora</th>
+          </tr></thead>
+          <tbody id="tb-receb"></tbody>
+        </table>
+      </div>
+      <div id="empty-receb" class="empty" hidden>
+        <svg><use href="#i-truck"/></svg><b>Nada aguardando recebimento</b>
+        <p>Quando um pedido tiver itens a chegar, eles aparecem aqui.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ESTOQUE ================= -->
+  <section id="v-estoque" hidden>
+    <div class="page-head">
+      <div>
+        <h1>Estoque</h1>
+        <div class="sub">Saldo do Estoque, entregas previstas e entradas enviadas a partir dos recebimentos.</div>
+      </div>
+      <div class="actions">
+        <div class="menu">
+          <button class="btn" data-menu><svg><use href="#i-io"/></svg>Importar<svg><use href="#i-down"/></svg></button>
+          <div class="menu-list" hidden>
+            <button id="est-importar">Importar XML do Estoque<small>Saldo, confirmação de recebimento ou resposta de disponibilidade</small></button>
+            <button id="est-buscar">Buscar saldo pela API<small>GET /api/xml do sistema de Estoque</small></button>
+            <hr>
+            <button id="est-conexao">Conexão com o Estoque<small>Endereço da API do Estoque</small></button>
+          </div>
+        </div>
+        <button class="btn" id="est-prev-enviar"><svg><use href="#i-truck"/></svg>Enviar previsões</button>
+        <button class="btn primary" id="est-enviar"><svg><use href="#i-send"/></svg>Enviar entradas</button>
+      </div>
+    </div>
+    <details class="help"><summary>Como funciona</summary><div class="help-body">
+      <p><strong>Saldo:</strong> importe o XML que o Estoque gera (contrato v2), busque pela API ou receba pelo socket. Produtos no mínimo ou abaixo dele podem virar pedido em um clique.</p>
+      <p><strong>Entregas previstas:</strong> pedidos ainda não recebidos, com a data prevista. Envie ao Estoque no <strong>previsao-entrega-v1</strong> para ele reservar espaço e conferente.</p>
+      <p><strong>Entradas:</strong> cada baixa em Recebimentos vira uma entrada. Envie no formato do Estoque (v2, só SKU e quantidade) ou no <strong>recebimento-v1</strong> (com fornecedor, status total/parcial e custo). A <strong>confirmacao-recebimento-v1</strong> do Estoque (aceito, divergente, rejeitado) volta para cá.</p>
+      <p><strong>Disponibilidade:</strong> pergunte ao Estoque quantas unidades de um produto existem antes de comprar. Usa o mesmo formato que o Estoque já responde ao Patrimônio (<code>consultaDisponibilidade</code> e <code>respostaDisponibilidade</code>).</p>
+      <p>Os contratos do Compras seguem o padrão do Finanweb e estão em <a href="contratos/" target="_blank" rel="noopener">contratos</a>, com XSD e exemplo de cada mensagem.</p>
+    </div></details>
+    <div class="kpis" id="kpi-estoque"></div>
+    <div class="seg" role="tablist" id="est-tabs">
+      <button data-aba="saldo" class="on">Saldo<span class="count" id="est-c-saldo"></span></button>
+      <button data-aba="previsoes">Entregas previstas<span class="count" id="est-c-prev"></span></button>
+      <button data-aba="entradas">Entradas<span class="count" id="est-c-ent"></span></button>
+      <button data-aba="consultas">Disponibilidade<span class="count" id="est-c-cons"></span></button>
+      <button data-aba="historico">Histórico XML<span class="count" id="est-c-hist"></span></button>
+    </div>
+
+    <div class="panel" id="est-p-saldo">
+      <div class="toolbar">
+        <label class="search"><svg><use href="#i-search"/></svg><input id="es-q" type="search" placeholder="Buscar por SKU ou produto" aria-label="Buscar no saldo"></label>
+        <select id="es-sit" aria-label="Filtrar situação">
+          <option value="">Situação: todas</option><option value="falta">Sem saldo</option><option value="baixo">No mínimo ou abaixo</option><option value="ok">Normal</option>
+        </select>
+        <span class="grow"></span>
+        <button class="btn sm" id="es-sel-baixo">Selecionar abaixo do mínimo</button>
+        <button class="btn sm primary" id="es-pedir" disabled>Criar pedido</button>
+      </div>
+      <div class="note" id="es-meta" hidden></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th style="width:36px"><input type="checkbox" id="es-all" aria-label="Selecionar todos"></th>
+            <th>SKU</th><th>Produto</th><th class="r">Saldo</th><th class="r">Mínimo</th><th class="r">Preço</th><th>Situação</th><th>Finalidade</th>
+          </tr></thead>
+          <tbody id="tb-saldo"></tbody>
+        </table>
+      </div>
+      <div id="empty-saldo" class="empty" hidden>
+        <svg><use href="#i-shelf"/></svg><b id="empty-saldo-t">Saldo do Estoque ainda não carregado</b>
+        <p id="empty-saldo-p">Importe o XML gerado pelo Estoque, busque pela API ou aguarde o envio pelo socket.</p>
+        <button class="btn" id="es-cta-importar">Importar XML do Estoque</button>
+      </div>
+    </div>
+
+    <div class="panel" id="est-p-previsoes" hidden>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Pedido</th><th>Fornecedor</th><th class="r">Itens a chegar</th><th>Previsão</th><th>Logística</th><th></th></tr></thead>
+          <tbody id="tb-prev"></tbody>
+        </table>
+      </div>
+      <div id="empty-prev" class="empty" hidden>
+        <svg><use href="#i-truck"/></svg><b>Nenhuma entrega prevista</b>
+        <p>Todos os pedidos já foram recebidos.</p>
+      </div>
+    </div>
+
+    <div class="panel" id="est-p-consultas" hidden>
+      <div class="toolbar">
+        <input id="dc-sku" list="dl-skus" placeholder="Código do produto no Estoque, ex.: A100" aria-label="Código do produto" style="max-width:320px" autocomplete="off">
+        <datalist id="dl-skus"></datalist>
+        <button class="btn primary" id="dc-socket"><svg><use href="#i-send"/></svg>Consultar via socket</button>
+        <button class="btn" id="dc-baixar">Baixar XML da consulta</button>
+        <span class="grow"></span><span class="meta" id="dc-meta"></span>
+      </div>
+      <div class="note">Pergunta ao Estoque quantas unidades de um produto estão disponíveis, no mesmo formato que o Estoque já responde ao Patrimônio. A consulta não reserva nem movimenta o saldo. A resposta entra sozinha pelo socket, ou importe o XML em <strong>Importar</strong>.</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Consulta</th><th>Produto</th><th>Enviada em</th><th>Disponível no Estoque</th><th></th></tr></thead>
+          <tbody id="tb-cons"></tbody>
+        </table>
+      </div>
+      <div id="empty-cons" class="empty" hidden>
+        <svg><use href="#i-search"/></svg><b>Nenhuma consulta ainda</b>
+        <p>Digite o código de um produto e consulte a disponibilidade antes de fazer o pedido.</p>
+      </div>
+    </div>
+
+    <div class="panel" id="est-p-historico" hidden>
+      <div class="toolbar">
+        <label class="search"><svg><use href="#i-search"/></svg><input id="hx-q" type="search" placeholder="Buscar por mensagem, referência ou conteúdo" aria-label="Buscar no histórico"></label>
+        <select id="hx-sis" aria-label="Filtrar sistema"><option value="">Sistema: todos</option><option>Estoque</option><option>Financeiro</option></select>
+        <select id="hx-dir" aria-label="Filtrar direção"><option value="">Direção: todas</option><option value="enviado">Enviados</option><option value="recebido">Recebidos</option></select>
+        <span class="grow"></span>
+        <button class="btn sm ghost danger" id="hx-limpar">Limpar histórico</button>
+      </div>
+      <div class="note">Todo XML que o Compras gera, envia ou recebe fica registrado aqui, com o contrato (XSD) de cada mensagem. Contratos:
+        <div class="chips" id="hx-xsds"></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data/hora</th><th>Direção</th><th>Mensagem</th><th>Via</th><th>Resultado</th><th></th></tr></thead>
+          <tbody id="tb-hist"></tbody>
+        </table>
+      </div>
+      <div id="empty-hist" class="empty" hidden>
+        <svg><use href="#i-doc"/></svg><b id="empty-hist-t">Nenhum XML registrado ainda</b>
+        <p id="empty-hist-p">Envie entradas, previsões ou consultas, ou importe um XML do Estoque, e cada mensagem aparece aqui.</p>
+      </div>
+    </div>
+
+    <div class="panel" id="est-p-entradas" hidden>
+      <div class="toolbar">
+        <select id="ee-filtro" aria-label="Filtrar entradas">
+          <option value="">Todas as entradas</option><option value="pendente">Não enviadas</option><option value="enviada">Enviadas</option><option value="divergente">Com divergência ou rejeitadas</option>
+        </select>
+        <span class="grow"></span><span class="meta" id="ee-meta"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Recebido em</th><th>Pedido</th><th>SKU</th><th>Produto</th><th class="r">Qtde</th><th>Tipo</th><th>Envio</th><th>Retorno do Estoque</th></tr></thead>
+          <tbody id="tb-ent"></tbody>
+        </table>
+      </div>
+      <div id="empty-ent" class="empty" hidden>
+        <svg><use href="#i-inbox"/></svg><b>Nenhuma entrada ainda</b>
+        <p>Dê baixa em Recebimentos e as entradas aparecem aqui, prontas para enviar ao Estoque.</p>
+        <button class="btn" data-go="recebimentos">Ir para Recebimentos</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MOVIMENTAÇÕES ================= -->
+  <section id="v-movimentacoes" hidden>
+    <div class="page-head">
+      <div>
+        <h1>Movimentações</h1>
+        <div class="sub">Entradas e saídas de itens. Cada recebimento gera uma entrada automática.</div>
+      </div>
+      <div class="actions">
+        <div class="menu">
+          <button class="btn" data-menu><svg><use href="#i-io"/></svg>Importar e exportar<svg><use href="#i-down"/></svg></button>
+          <div class="menu-list" hidden>
+            <button id="btn-mov-import">Importar CSV<small>SKU, Nome, Quantidade, Fornecedor, Tipo, Data, Origem</small></button>
+            <button id="btn-mov-modelo">Baixar modelo do CSV</button>
+            <hr>
+            <button id="btn-mov-export">Exportar CSV<small>Agrupado por data, tipo, origem e fornecedor</small></button>
+          </div>
+        </div>
+        <button class="btn primary" id="btn-mov-new"><svg><use href="#i-plus"/></svg>Nova movimentação</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="toolbar">
+        <label class="search"><svg><use href="#i-search"/></svg><input id="fm-q" type="search" placeholder="Buscar por SKU, produto, fornecedor ou origem" aria-label="Buscar movimentações"></label>
+        <select id="fm-tipo" aria-label="Filtrar tipo"><option value="">Tipo: todos</option><option value="entrada">Entradas</option><option value="saida">Saídas</option></select>
+        <span class="grow"></span><span class="meta" id="fm-meta"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Tipo</th><th>SKU</th><th>Produto</th><th class="r">Qtde</th><th>Fornecedor</th><th>Origem</th><th></th></tr></thead>
+          <tbody id="tb-mov"></tbody>
+        </table>
+      </div>
+      <div id="empty-mov" class="empty" hidden>
+        <svg><use href="#i-swap"/></svg><b>Nenhuma movimentação</b>
+        <p>Receba itens, lance uma movimentação manual ou importe um CSV.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FORNECEDORES ================= -->
+  <section id="v-fornecedores" hidden>
+    <div class="page-head">
+      <div>
+        <h1>Fornecedores</h1>
+        <div class="sub">Um fornecedor usado em 2 pedidos ou mais vira cadastro automaticamente.</div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="btn-new-forn"><svg><use href="#i-plus"/></svg>Novo fornecedor</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nome</th><th>CPF/CNPJ</th><th>Contato</th><th class="r">Pedidos</th><th>Situação</th><th></th></tr></thead>
+          <tbody id="tb-forn"></tbody>
+        </table>
+      </div>
+      <div id="empty-forn" class="empty" hidden>
+        <svg><use href="#i-users"/></svg><b>Nenhum fornecedor ainda</b>
+        <p>Cadastre um fornecedor ou crie pedidos: nomes repetidos viram cadastro.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FINANCEIRO ================= -->
+  <section id="v-financeiro" hidden>
+    <div class="page-head">
+      <div>
+        <h1>Financeiro</h1>
+        <div class="sub">Pedidos como contas a pagar e consulta de pendências com fornecedores, em XML.</div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="btn-fin-config"><svg><use href="#i-gear"/></svg>Dados da empresa</button>
+        <div class="menu">
+          <button class="btn" data-menu><svg><use href="#i-send"/></svg>Contas a pagar<svg><use href="#i-down"/></svg></button>
+          <div class="menu-list" hidden>
+            <button id="btn-fin-saida">Baixar XML de saída<small>saida-v2 com os pedidos como despesas</small></button>
+            <button id="btn-fin-saida-sock">Enviar via socket<small>Mesmo XML, em uma linha</small></button>
+          </div>
+        </div>
+        <button class="btn" id="btn-fin-consulta">Consultar pendências</button>
+        <button class="btn primary" id="btn-fin-resposta" title="respostaPendencias ou avisoPagamento">Importar resposta</button>
+      </div>
+    </div>
+    <details class="help"><summary>Como funciona</summary><div class="help-body">
+      <p>Os XMLs enviados e recebidos ficam em <strong>Estoque → Histórico XML</strong> (filtro Sistema: Financeiro).</p>
+      <p>Contratos definidos pelo Financeiro: <a href="https://finanwebsistema.vercel.app/contratos" target="_blank" rel="noopener">finanwebsistema.vercel.app/contratos</a>.</p>
+      <p><strong>Contas a pagar:</strong> gera o movimento saida-v2 com os pedidos como despesas (Pendente/Aprovado viram PENDENTE, Pago vira CONFIRMADO). O fornecedor precisa ter CPF/CNPJ cadastrado.</p>
+      <p><strong>Envio:</strong> exatamente como em finanwebsistema.vercel.app/contratos: arquivo <strong>.xml</strong> para <strong>#finanweb</strong> pelo servidor da turma, terminado com o pedaço de tamanho 0. O aceite ou a recusa volta no chat e aparece como aviso. O <strong>aviso de pagamento</strong> do Financeiro marca a compra como paga sozinho.</p>
+      <p><strong>Consultar pendências:</strong> gera a consultaPendencias de um fornecedor ou de todos. Pelo socket, a resposta do Financeiro entra sozinha. Por arquivo, use <strong>Importar resposta</strong>.</p>
+    </div></details>
+    <div class="panel">
+      <div class="note" id="fin-resumo"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Referência</th><th>Fornecedor</th><th>CPF/CNPJ</th><th>Categoria</th><th class="r">Valor</th><th>Vencimento</th><th>Situação</th></tr></thead>
+          <tbody id="tb-fin"></tbody>
+        </table>
+      </div>
+      <div id="empty-fin" class="empty" hidden>
+        <svg><use href="#i-wallet"/></svg><b>Nenhuma pendência carregada</b>
+        <p>Consulte as pendências, envie ao Financeiro e importe a resposta.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SOCKET ================= -->
+  <section id="v-integracao" hidden>
+    <div class="page-head">
+      <div>
+        <h1>Socket</h1>
+        <div class="sub">O navegador não abre socket TCP direto. Deixe a ponte-socket.js rodando no seu computador: ela conecta no servidor da turma e repassa as mensagens para esta tela. Os XMLs vão como arquivo, em privado, para o destino de cada setor.</div>
+      </div>
+      <div class="actions"><button class="btn ghost" id="sock-limpar">Limpar tela</button></div>
+    </div>
+    <div class="panel">
+      <div class="toolbar">
+        <input id="sock-url" style="max-width:260px" placeholder="http://localhost:8787" aria-label="Endereço da ponte">
+        <button class="btn primary" id="sock-conectar">Conectar</button>
+        <button class="btn" id="sock-desconectar">Desconectar</button>
+        <span id="sock-status" class="badge b-slate">Desconectado</span>
+      </div>
+      <div class="toolbar">
+        <span class="meta">Destinos dos arquivos:</span>
+        <label class="small" for="sock-dest-fin" style="margin:0">Financeiro</label><input id="sock-dest-fin" style="max-width:160px" placeholder="#finanweb">
+        <label class="small" for="sock-dest-est" style="margin:0">Estoque</label><input id="sock-dest-est" style="max-width:200px" placeholder="#sistema-de-estoque">
+        <button class="btn sm" id="sock-dest-salvar">Salvar destinos</button>
+        <span class="grow"></span><span class="meta" id="sock-ponte-ver"></span>
+      </div>
+      <div class="toolbar">
+        <span class="meta">Setores conectados agora (Financeiro recebe em #finanweb; Estoque, pelo ID atual):</span>
+        <span id="sock-dir" class="chips" style="margin:0"></span>
+        <span class="grow"></span>
+        <button class="btn sm" id="sock-lista">Atualizar IDs (/lista)</button>
+      </div>
+      <div class="toolbar">
+        <input id="sock-msg" placeholder="Mensagem livre, enviada como uma linha (ex.: /lista)" aria-label="Mensagem">
+        <button class="btn" id="sock-enviar"><svg><use href="#i-send"/></svg>Enviar</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th style="width:100px">Hora</th><th style="width:110px">Direção</th><th>Mensagem</th></tr></thead>
+          <tbody id="tb-sock"></tbody>
+        </table>
+      </div>
+      <div id="empty-sock" class="empty" hidden>
+        <svg><use href="#i-plug"/></svg><b>Nenhuma mensagem ainda</b>
+        <p>Inicie a ponte e clique em Conectar.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= IMPORTADOS ================= -->
+  <section id="v-importados" hidden>
+    <div class="page-head">
+      <div>
+        <h1>CSV importados</h1>
+        <div class="sub">Leia um CSV de qualquer layout, vindo de outro sistema. Depois você pode ver, exportar de volta ou excluir.</div>
+      </div>
+      <div class="actions"><button class="btn primary" id="btn-import-generico"><svg><use href="#i-io"/></svg>Importar CSV avulso</button></div>
+    </div>
+    <div class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Arquivo</th><th>Colunas</th><th class="r">Linhas</th><th>Importado em</th><th></th></tr></thead>
+          <tbody id="tb-importados"></tbody>
+        </table>
+      </div>
+      <div id="empty-importados" class="empty" hidden>
+        <svg><use href="#i-table"/></svg><b>Nenhum CSV importado</b>
+        <p>Use Importar CSV avulso para ler um arquivo de qualquer layout.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= LOGS ================= -->
+  <section id="v-logs" hidden>
+    <div class="page-head">
+      <div>
+        <h1>Logs</h1>
+        <div class="sub">Trilha de auditoria das operações de compras.</div>
+      </div>
+      <div class="actions"><button class="btn ghost danger" id="btn-clear-logs">Limpar logs</button></div>
+    </div>
+    <div class="panel">
+      <div class="toolbar">
+        <label class="search"><svg><use href="#i-search"/></svg><input id="fl-q" type="search" placeholder="Buscar nos logs" aria-label="Buscar nos logs"></label>
+        <span class="grow"></span><span class="meta" id="fl-meta"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th style="width:190px">Data/hora</th><th>Evento</th></tr></thead>
+          <tbody id="tb-logs"></tbody>
+        </table>
+      </div>
+      <div id="empty-logs" class="empty" hidden>
+        <svg><use href="#i-list"/></svg><b>Sem eventos registrados</b><p>As operações aparecem aqui conforme você usa o sistema.</p>
+      </div>
+    </div>
+  </section>
+</main>
+</div>
+
+<!-- ================= MODAL PEDIDO ================= -->
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <div class="modal-head"><h2 id="modal-title">Novo pedido</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <div class="modal-body">
+      <div class="field">
+        <label for="f-fornecedor">Fornecedor</label>
+        <input id="f-fornecedor" list="dl-fornecedores" placeholder="Digite ou selecione um fornecedor" autocomplete="off">
+        <datalist id="dl-fornecedores"></datalist>
+        <div class="hint">Nomes novos são padronizados e passam a contar para virar cadastro.</div>
+      </div>
+      <div class="field">
+        <label>Itens</label>
+        <div class="item-head"><span>SKU</span><span>Produto</span><span>Qtde</span><span>Preço un. (R$)</span><span></span></div>
+        <div id="items"></div>
+        <button class="btn sm" id="btn-add-item" style="margin-top:10px"><svg><use href="#i-plus"/></svg>Adicionar item</button>
+      </div>
+      <div class="grid g2">
+        <div class="field">
+          <label for="f-fin">Situação financeira</label>
+          <select id="f-fin"><option value="Pendente">Pendente</option><option value="Aprovado">Aprovado</option><option value="Pago">Pago</option></select>
+        </div>
+        <div class="field">
+          <label for="f-log">Situação logística</label>
+          <select id="f-log"><option value="Aguardando">Aguardando</option><option value="Em trânsito">Em trânsito</option><option value="Parcial">Parcial</option><option value="Recebido">Recebido</option></select>
+        </div>
+      </div>
+      <div class="grid g2">
+        <div class="field">
+          <label for="f-cat">Categoria</label>
+          <input id="f-cat" list="dl-categorias" placeholder="Ex.: Mercadorias" autocomplete="off">
+          <datalist id="dl-categorias"><option value="Mercadorias"><option value="Material de escritório"><option value="Limpeza"><option value="Serviços"></datalist>
+        </div>
+        <div class="field">
+          <label for="f-pag">Forma de pagamento</label>
+          <select id="f-pag"><option>Boleto</option><option>Pix</option><option>Transferência</option><option>Cartão</option><option>Dinheiro</option></select>
+        </div>
+      </div>
+      <div class="grid g2">
+        <div class="field"><label for="f-venc">Vencimento</label><input id="f-venc" type="date"></div>
+        <div class="field"><label for="f-prev">Previsão de entrega</label><input id="f-prev" type="date"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <div class="total">Total: <span id="modal-total">R$ 0,00</span></div>
+      <div class="btns"><button class="btn" id="btn-cancel">Cancelar</button><button class="btn primary" id="btn-save">Salvar pedido</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL FORNECEDOR ================= -->
+<div class="overlay" id="overlay-forn" role="dialog" aria-modal="true" aria-labelledby="forn-title">
+  <div class="modal sm">
+    <div class="modal-head"><h2 id="forn-title">Novo fornecedor</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <div class="modal-body">
+      <div class="field"><label for="fn-nome">Nome / Razão social</label><input id="fn-nome" placeholder="Ex.: Distribuidora Sul Ltda"></div>
+      <div class="field"><label for="fn-cnpj">CPF/CNPJ</label><input id="fn-cnpj" placeholder="00.000.000/0000-00"><div class="hint">Obrigatório para enviar o pedido ao Financeiro.</div></div>
+      <div class="field"><label for="fn-contato">Contato (opcional)</label><input id="fn-contato" placeholder="Telefone, e-mail ou responsável"></div>
+    </div>
+    <div class="modal-foot end"><div class="btns"><button class="btn" id="fn-cancel">Cancelar</button><button class="btn primary" id="fn-save">Salvar fornecedor</button></div></div>
+  </div>
+</div>
+
+<!-- ================= MODAL VISUALIZAR CSV ================= -->
+<div class="overlay" id="overlay-ds" role="dialog" aria-modal="true" aria-labelledby="ds-title">
+  <div class="modal lg">
+    <div class="modal-head"><h2 id="ds-title">Visualizar CSV</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <div class="modal-body">
+      <div class="hint" id="ds-meta" style="margin:0 0 12px"></div>
+      <div class="table-wrap" style="max-height:60vh;overflow:auto;border:1px solid var(--line);border-radius:8px">
+        <table id="ds-table"><thead></thead><tbody></tbody></table>
+      </div>
+    </div>
+    <div class="modal-foot end"><div class="btns"><button class="btn" id="ds-export">Exportar CSV</button><button class="btn primary" id="ds-close">Fechar</button></div></div>
+  </div>
+</div>
+
+<!-- ================= MODAL MOVIMENTAÇÃO ================= -->
+<div class="overlay" id="overlay-mov" role="dialog" aria-modal="true" aria-labelledby="mov-title">
+  <div class="modal sm">
+    <div class="modal-head"><h2 id="mov-title">Nova movimentação</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <div class="modal-body">
+      <div class="grid g2">
+        <div class="field"><label for="mv-tipo">Tipo</label><select id="mv-tipo"><option value="entrada">Entrada</option><option value="saida">Saída</option></select></div>
+        <div class="field"><label for="mv-qtd">Quantidade</label><input id="mv-qtd" type="number" min="1" value="1"></div>
+      </div>
+      <div class="grid" style="grid-template-columns:1fr 2fr">
+        <div class="field"><label for="mv-sku">SKU</label><input id="mv-sku" placeholder="Ex.: A100"></div>
+        <div class="field"><label for="mv-produto">Produto</label><input id="mv-produto" placeholder="Nome do produto"></div>
+      </div>
+      <div class="field"><label for="mv-fornecedor">Fornecedor (opcional)</label><input id="mv-fornecedor" list="dl-fornecedores" placeholder="Selecione ou digite" autocomplete="off"></div>
+      <div class="field"><label for="mv-origem">Origem</label><input id="mv-origem" placeholder="Ex.: Ajuste manual, Inventário"></div>
+    </div>
+    <div class="modal-foot end"><div class="btns"><button class="btn" id="mv-cancel">Cancelar</button><button class="btn primary" id="mv-save">Salvar movimentação</button></div></div>
+  </div>
+</div>
+
+<!-- ================= MODAL DADOS DA EMPRESA ================= -->
+<div class="overlay" id="overlay-cfg" role="dialog" aria-modal="true" aria-labelledby="cfg-title">
+  <div class="modal sm">
+    <div class="modal-head"><h2 id="cfg-title">Dados da empresa</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <div class="modal-body">
+      <div class="field"><label for="cfg-empresa">Empresa (razão social)</label><input id="cfg-empresa" placeholder="Empresa LTDA"></div>
+      <div class="field"><label for="cfg-cnpj">CNPJ da empresa</label><input id="cfg-cnpj" placeholder="00.000.000/0000-00"></div>
+      <div class="field"><label for="cfg-usuario">Usuário</label><input id="cfg-usuario" placeholder="maria.compras"></div>
+      <div class="hint">Vão no cabeçalho dos XMLs enviados ao Financeiro e ao Estoque.</div>
+    </div>
+    <div class="modal-foot end"><div class="btns"><button class="btn" id="cfg-cancel">Cancelar</button><button class="btn primary" id="cfg-save">Salvar</button></div></div>
+  </div>
+</div>
+
+<!-- ================= MODAL CONSULTA DE PENDÊNCIAS ================= -->
+<div class="overlay" id="overlay-cons" role="dialog" aria-modal="true" aria-labelledby="cons-title">
+  <div class="modal sm">
+    <div class="modal-head"><h2 id="cons-title">Consultar pendências</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <div class="modal-body">
+      <div class="field">
+        <label for="cons-forn">Fornecedor</label>
+        <select id="cons-forn"></select>
+        <div class="hint">Só aparecem fornecedores com CPF/CNPJ. "Todos" pede ao Financeiro as pendências de todos.</div>
+      </div>
+    </div>
+    <div class="modal-foot end"><div class="btns"><button class="btn" id="cons-cancel">Cancelar</button><button class="btn" id="cons-gerar">Baixar XML</button><button class="btn primary" id="cons-enviar">Enviar via socket</button></div></div>
+  </div>
+</div>
+
+<!-- ================= MODAL ENVIO AO ESTOQUE ================= -->
+<div class="overlay" id="overlay-envio" role="dialog" aria-modal="true" aria-labelledby="env-title">
+  <div class="modal sm">
+    <div class="modal-head"><h2 id="env-title">Enviar entradas ao Estoque</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <div class="modal-body">
+      <div class="field" id="env-f-escopo">
+        <label for="env-escopo">Quais entradas</label>
+        <select id="env-escopo"><option value="pendentes">Só as que ainda não foram enviadas</option><option value="todas">Todas</option></select>
+      </div>
+      <div class="field" id="env-f-formato">
+        <label for="env-formato">Formato</label>
+        <select id="env-formato">
+          <option value="v2">estoque v2 (formato do Estoque): SKU e quantidade</option>
+          <option value="v1">recebimento-v1: fornecedor, status total/parcial e custo</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="env-destino">Como enviar</label>
+        <select id="env-destino">
+          <option value="api">API do Estoque: entra no saldo na hora (só XML v2)</option>
+          <option value="socket">Arquivo pelo socket, para o ID do Estoque</option>
+          <option value="arquivo">Baixar o arquivo XML</option>
+        </select>
+      </div>
+      <div class="hint" id="env-hint"></div>
+    </div>
+    <div class="modal-foot end"><div class="btns"><button class="btn" data-close>Cancelar</button><button class="btn primary" id="env-confirmar"><svg><use href="#i-send"/></svg>Enviar</button></div></div>
+  </div>
+</div>
+
+<!-- ================= MODAL CONEXÃO COM O ESTOQUE ================= -->
+<div class="overlay" id="overlay-conn" role="dialog" aria-modal="true" aria-labelledby="conn-title">
+  <div class="modal sm">
+    <div class="modal-head"><h2 id="conn-title">Conexão com o Estoque</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <div class="modal-body">
+      <div class="field">
+        <label for="conn-url">Endereço da API do Estoque</label>
+        <input id="conn-url" type="url" placeholder="https://estoque.exemplo.com">
+        <div class="hint">Usado para buscar o saldo (GET /api/xml) e dar entrada no saldo com o XML v2 (POST /api/xml/validar e /api/xml). Com a ponte aberta, a chamada passa por ela, sem bloqueio de CORS. Padrão: https://sistema-de-estoque-cyan.vercel.app</div>
+      </div>
+    </div>
+    <div class="modal-foot end"><div class="btns"><button class="btn" data-close>Cancelar</button><button class="btn primary" id="conn-salvar">Salvar</button></div></div>
+  </div>
+</div>
+
+<!-- ================= MODAL VISUALIZAR XML ================= -->
+<div class="overlay" id="overlay-xml" role="dialog" aria-modal="true" aria-labelledby="xml-title">
+  <div class="modal lg">
+    <div class="modal-head"><h2 id="xml-title">XML</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <div class="modal-body">
+      <div class="hint" id="xml-meta" style="margin:0 0 10px"></div>
+      <pre class="xml-view" id="xml-view"></pre>
+    </div>
+    <div class="modal-foot">
+      <a class="btn ghost" id="xml-xsd" target="_blank" rel="noopener">Abrir XSD</a>
+      <div class="btns"><button class="btn" id="xml-copiar">Copiar XML</button><button class="btn" id="xml-baixar">Baixar</button><button class="btn primary" data-close>Fechar</button></div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="file-input" accept=".csv" hidden>
+<input type="file" id="file-fin" accept=".xml" hidden>
+<input type="file" id="file-generic" accept=".csv,.txt" hidden>
+<input type="file" id="file-mov" accept=".csv,.txt" hidden>
+<input type="file" id="file-estoque" accept=".xml" hidden>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script src="estoque-xml.js" charset="utf-8"></script>
+<script>
+/* =========================================================================
+   Controle de Compras — v3
+   -------------------------------------------------------------------------
+   - Persistência local (localStorage).
+   - Fornecedores com promoção automática (2 usos) e nomes padronizados.
+   - Recebimento item a item (parcial permitido) -> Movimentações + Estoque.
+   - Estoque: saldo (XML v2 do Estoque), entregas previstas e entradas,
+     enviadas no XML v2 (estoque.xsd) ou no contrato detalhado
+     compras-estoque.xsd v1, por arquivo, socket ou API. Usa estoque-xml.js.
+   - Financeiro: XML Finanweb saida-v2 e pendencias-fornecedor-v1.
+   - Socket TCP da turma via ponte-socket.js (uma mensagem por linha).
+   ========================================================================= */
+const STORAGE_KEY = 'controle_compras_v2';
+const PROMO_THRESHOLD = 2;
+const money = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const uid = () => Math.random().toString(36).slice(2,8);
+const BOM = '\uFEFF';
+const semAcento = s => (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const canonKey = s => semAcento(s).toLowerCase().replace(/\s+/g,' ').trim();
+function padronizaNome(s){
+  const base=(s||'').replace(/\s+/g,' ').trim();
+  if(!base) return '';
+  return base.split(' ').map(w=>{
+    if(w.length<=3 && w===w.toUpperCase()) return w;
+    return w.charAt(0).toUpperCase()+w.slice(1).toLowerCase();
+  }).join(' ');
+}
+// ---------------------------- estado ----------------------------------------
+function estadoVazio(){
+  return { seq:1000, pedidos:[], fornecedores:[], logs:[], importados:[], movimentacoes:[],
+    config:{empresa:'',cnpj:'',usuario:''}, consultaSeq:0, consultas:[], pendencias:null,
+    socket:{url:'http://localhost:8787'}, estoque:null };
+}
+let state = estadoVazio();
+function save(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+  renderNavCounts();
+}
+function load(){
+  try{ const raw=localStorage.getItem(STORAGE_KEY); if(raw){ state=JSON.parse(raw); return true; } }catch(e){}
+  return false;
+}
+function seed(){
+  state = estadoVazio(); state.seq=1002;
+  state.pedidos = [
+    { id:uid(), num:'PC-1001', fornecedor:'Distribuidora Sul Ltda',
+      itens:[{sku:'A100',nome:'Papel A4 75g',qtd:50,preco:22.90,receb:0},
+             {sku:'A250',nome:'Caneta azul',qtd:120,preco:1.40,receb:0}],
+      fin:'Aprovado', log:'Em trânsito', recebido:false, emissao:hojeISO(), previsao:somaDias(hojeISO(),3) },
+    { id:uid(), num:'PC-1002', fornecedor:'Atacado Candeias',
+      itens:[{sku:'B300',nome:'Detergente 5L',qtd:30,preco:18.00,receb:0}],
+      fin:'Pendente', log:'Aguardando', recebido:false, emissao:hojeISO(), previsao:somaDias(hojeISO(),7) },
+  ];
+  state.pedidos.forEach(p=> registraUsoFornecedor(p.fornecedor, {silent:true}));
+  log('Sistema iniciado com ' + state.pedidos.length + ' pedido(s).', true);
+}
+const nextNum = () => 'PC-' + (++state.seq);
+function log(evt, noSave){
+  state.logs.unshift({ ts:new Date().toLocaleString('pt-BR'), evt });
+  state.logs = state.logs.slice(0,1000);
+  if(!noSave) save();
+  if(el('#v-logs') && el('#v-logs').hidden===false) renderLogs();
+}
+// ---------------------------- fornecedores ----------------------------------
+function acharFornecedor(nome){
+  const k=canonKey(nome);
+  return state.fornecedores.find(f=>canonKey(f.nome)===k);
+}
+function registraUsoFornecedor(nome, opt={}){
+  const nomeP=padronizaNome(nome);
+  if(!nomeP) return null;
+  let f=acharFornecedor(nomeP);
+  if(!f){ f={ id:uid(), nome:nomeP, cnpj:'', contato:'', usos:0, cadastrado:false, manual:false }; state.fornecedores.push(f); }
+  else f.nome=nomeP;
+  f.usos=(f.usos||0)+1;
+  if(!f.cadastrado && f.usos>=PROMO_THRESHOLD){
+    f.cadastrado=true;
+    if(!opt.silent) log('Fornecedor "'+f.nome+'" atingiu '+f.usos+' usos e virou cadastro.');
+  }
+  return f;
+}
+function recalcUsos(){
+  const cont={};
+  state.pedidos.forEach(p=>{ const k=canonKey(p.fornecedor); if(k) cont[k]=(cont[k]||0)+1; });
+  state.fornecedores.forEach(f=>{
+    f.usos=cont[canonKey(f.nome)]||0;
+    if(f.usos>=PROMO_THRESHOLD) f.cadastrado=true;
+    if(f.manual) f.cadastrado=true;
+  });
+}
+// ---------------------------- utilitários de tela ---------------------------
+const el = s => document.querySelector(s);
+const els = s => [...document.querySelectorAll(s)];
+const esc = v => String(v==null?'':v).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const totalPedido = p => p.itens.reduce((s,i)=>s + i.qtd*i.preco, 0);
+const totalRecebido = p => p.itens.reduce((s,i)=>s + (i.receb||0), 0);
+const totalQtd = p => p.itens.reduce((s,i)=>s + i.qtd, 0);
+const finBadge = f => ({Pendente:'b-amber',Aprovado:'b-blue',Pago:'b-green'}[f]||'b-slate');
+const logBadge = l => ({Aguardando:'b-slate','Em trânsito':'b-blue',Recebido:'b-green','Parcial':'b-amber'}[l]||'b-slate');
+const contem = (q, ...campos) => !q || campos.some(c => canonKey(c).includes(q));
+function kpis(alvo, lista){
+  el(alvo).innerHTML = lista.map(k=>`<div class="kpi ${k.cls||''}"><b>${esc(k.v)}</b><span>${esc(k.t)}</span></div>`).join('');
+}
+function progresso(rec, tot){
+  const pct = tot ? Math.round(100*rec/tot) : 0;
+  return `<div class="prog"><span class="progress ${pct>=100?'done':''}"><i style="width:${pct}%"></i></span><span class="small dim">${rec}/${tot}</span></div>`;
+}
+// previsão de entrega: texto + badge relativo a hoje
+function entregaInfo(p){
+  if(p.log==='Recebido' || p.recebido) return '<span class="small dim">Entregue</span>';
+  if(!isoOk(p.previsao)) return '<span class="small faint">Sem previsão</span>';
+  const dias = Math.round((new Date(p.previsao+'T12:00:00') - new Date(hojeISO()+'T12:00:00'))/86400000);
+  let b='';
+  if(dias<0) b=`<span class="badge b-red">${-dias}d atrasado</span>`;
+  else if(dias===0) b='<span class="badge b-amber">Hoje</span>';
+  else if(dias<=2) b=`<span class="badge b-blue">Em ${dias}d</span>`;
+  return `<div class="prog"><span>${fmtData(p.previsao)}</span>${b}</div>`;
+}
+const atrasado = p => !(p.log==='Recebido'||p.recebido) && isoOk(p.previsao) && p.previsao < hojeISO();
+
+// ---------------------------- PEDIDOS ---------------------------------------
+const fp = { q:'', fin:'', log:'' };
+function renderPedidos(){
+  const abertos = state.pedidos.filter(p=>p.log!=='Recebido');
+  const aPagar = state.pedidos.filter(p=>p.fin!=='Pago').reduce((s,p)=>s+totalPedido(p),0);
+  const atras = state.pedidos.filter(atrasado).length;
+  kpis('#kpi-pedidos', [
+    {v:abertos.length, t:'pedidos em aberto'},
+    {v:money(aPagar), t:'a pagar (pendente ou aprovado)'},
+    {v:atras, t:'entregas atrasadas', cls:atras?'bad':''},
+    {v:state.pedidos.filter(p=>p.log==='Recebido').length, t:'pedidos recebidos'}
+  ]);
+  const q = canonKey(fp.q);
+  const lista = state.pedidos.filter(p =>
+    (!fp.fin || p.fin===fp.fin) && (!fp.log || p.log===fp.log) &&
+    contem(q, p.num, p.fornecedor, ...p.itens.map(i=>i.nome+' '+i.sku)));
+  el('#fp-meta').textContent = lista.length===state.pedidos.length ? state.pedidos.length+' pedido(s)' : lista.length+' de '+state.pedidos.length;
+  const tb = el('#tb-pedidos');
+  tb.innerHTML = lista.map(p=>`
+    <tr>
+      <td><span class="code">${esc(p.num)}</span></td>
+      <td>${esc(p.fornecedor)||'<span class="faint">Sem fornecedor</span>'}</td>
+      <td class="r">${p.itens.length}</td>
+      <td class="r">${money(totalPedido(p))}</td>
+      <td>${progresso(totalRecebido(p), totalQtd(p))}</td>
+      <td>${entregaInfo(p)}</td>
+      <td><span class="badge ${finBadge(p.fin)}">${esc(p.fin)}</span>${p.avisoFin==='CANCELADO'?'<div class="small" style="color:var(--red-tx)">Cancelada no Financeiro</div>':(p.avisoFin==='PAGO'?'<div class="small dim">Confirmado pelo Financeiro</div>':'')}</td>
+      <td><span class="badge ${logBadge(p.log)}">${esc(p.log)}</span></td>
+      <td><div class="acts"><button class="act" data-edit="${p.id}">Editar</button><button class="act red" data-del="${p.id}">Excluir</button></div></td>
+    </tr>`).join('');
+  const vazio = !lista.length;
+  el('#empty-pedidos').hidden = !vazio;
+  el('#empty-pedidos-txt').textContent = state.pedidos.length
+    ? 'Nenhum pedido corresponde aos filtros. Limpe a busca ou troque a situação.'
+    : 'Crie o primeiro pedido ou importe o CSV enviado pelo Estoque.';
+}
+el('#fp-q').oninput = e => { fp.q=e.target.value; renderPedidos(); };
+el('#fp-fin').onchange = e => { fp.fin=e.target.value; renderPedidos(); };
+el('#fp-log').onchange = e => { fp.log=e.target.value; renderPedidos(); };
+
+// ---------------------------- FORNECEDORES ----------------------------------
+function renderForn(){
+  recalcUsos();
+  const lista=[...state.fornecedores].sort((a,b)=>(b.cadastrado-a.cadastrado) || a.nome.localeCompare(b.nome));
+  el('#empty-forn').hidden = lista.length>0;
+  el('#tb-forn').innerHTML = lista.map(f=>{
+    const sit = f.cadastrado ? '<span class="badge b-green">Cadastrado</span>'
+      : '<span class="badge b-slate">Avulso ('+f.usos+'/'+PROMO_THRESHOLD+')</span>';
+    const doc = f.cnpj ? esc(fmtDoc(f.cnpj)) : '<span class="badge b-amber">Sem CPF/CNPJ</span>';
+    return `<tr>
+      <td>${esc(f.nome)}</td><td>${doc}</td><td>${esc(f.contato)||'<span class="faint">—</span>'}</td>
+      <td class="r">${f.usos||0}</td><td>${sit}</td>
+      <td><div class="acts"><button class="act" data-eforn="${f.id}">Editar</button><button class="act red" data-dforn="${f.id}">Excluir</button></div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ---------------------------- RECEBIMENTOS ----------------------------------
+const fr = { q:'' };
+function itensAReceber(){
+  const rows=[];
+  state.pedidos.forEach(p=> p.itens.forEach((i,idx)=>{ if((i.receb||0) < i.qtd) rows.push({p,i,idx}); }));
+  return rows;
+}
+function renderReceb(){
+  const todos = itensAReceber();
+  const q = canonKey(fr.q);
+  const rows = todos.filter(({p,i}) => contem(q, p.num, p.fornecedor, i.nome, i.sku));
+  el('#fr-meta').textContent = todos.length ? rows.length+' item(ns) a receber' : '';
+  el('#empty-receb').hidden = rows.length>0;
+  el('#tb-receb').innerHTML = rows.map(({p,i,idx})=>{
+    const rest = i.qtd-(i.receb||0);
+    return `<tr>
+      <td><span class="code">${esc(p.num)}</span></td>
+      <td>${esc(p.fornecedor)||'<span class="faint">—</span>'}</td>
+      <td><span class="code">${esc(i.sku)||'<span class="faint">—</span>'}</span></td>
+      <td>${esc(i.nome)}</td>
+      <td>${progresso(i.receb||0, i.qtd)}</td>
+      <td>${entregaInfo(p)}</td>
+      <td><div class="acts" style="justify-content:flex-start;align-items:center">
+        <input class="rq" type="number" min="1" max="${rest}" value="${rest}" aria-label="Quantidade recebida de ${esc(i.nome)}">
+        <button class="btn sm primary" data-receb-item="${p.id}:${idx}">Receber</button>
+        <button class="act muted" data-receb-tudo="${p.id}:${idx}" title="Receber as ${rest} unidades restantes">Tudo</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+el('#fr-q').oninput = e => { fr.q=e.target.value; renderReceb(); };
+
+// ---------------------------- LOGS ------------------------------------------
+const fl = { q:'' };
+function renderLogs(){
+  const q = canonKey(fl.q);
+  const lista = state.logs.filter(l => contem(q, l.evt, l.ts));
+  el('#fl-meta').textContent = state.logs.length ? lista.length+' evento(s)' : '';
+  el('#empty-logs').hidden = lista.length>0;
+  el('#tb-logs').innerHTML = lista.slice(0,400).map(l=>`<tr><td class="dim small">${esc(l.ts)}</td><td>${esc(l.evt)}</td></tr>`).join('');
+}
+el('#fl-q').oninput = e => { fl.q=e.target.value; renderLogs(); };
+
+function renderDatalist(){
+  el('#dl-fornecedores').innerHTML = [...state.fornecedores]
+    .sort((a,b)=>(b.cadastrado-a.cadastrado)||a.nome.localeCompare(b.nome))
+    .map(f=>`<option value="${esc(f.nome)}">`).join('');
+}
+function renderNavCounts(){
+  const set=(id,n)=>{ const b=el(id); if(!b) return; b.textContent=n; b.hidden=!n; };
+  set('#cnt-pedidos', state.pedidos.filter(atrasado).length);
+  set('#cnt-receb', itensAReceber().length);
+  const est = state.estoque;
+  set('#cnt-estoque', est && est.entradas ? est.entradas.filter(x=>!x.enviado).length : 0);
+}
+function renderAll(){
+  renderPedidos(); renderForn(); renderReceb(); renderMov(); renderFin(); renderImportados(); renderLogs(); renderDatalist();
+  renderEstoque(); renderNavCounts();
+}
+function atualizaLogistica(p){
+  const rec=totalRecebido(p), tot=totalQtd(p);
+  if(rec<=0){ if(p.log==='Parcial' || p.log==='Recebido') p.log='Aguardando'; p.recebido=false; }
+  else if(rec<tot){ p.log='Parcial'; p.recebido=false; }
+  else { p.log='Recebido'; p.recebido=true; }
+}
+
+// ---------------------------- navegação -------------------------------------
+const VIEWS = ['pedidos','recebimentos','estoque','movimentacoes','fornecedores','financeiro','integracao','importados','logs'];
+function irPara(v){
+  if(!VIEWS.includes(v)) v='pedidos';
+  els('.nav-item').forEach(x=>x.classList.toggle('active', x.dataset.view===v));
+  VIEWS.forEach(k=> el('#v-'+k).hidden = k!==v);
+  if(v==='pedidos') renderPedidos();
+  if(v==='fornecedores') renderForn();
+  if(v==='recebimentos') renderReceb();
+  if(v==='estoque') renderEstoque();
+  if(v==='movimentacoes') renderMov();
+  if(v==='financeiro') renderFin();
+  if(v==='importados') renderImportados();
+  if(v==='logs') renderLogs();
+  if(v==='integracao') renderSock();
+  document.body.classList.remove('nav-open');
+  if(location.hash.slice(1)!==v) history.replaceState(null,'','#'+v);
+  window.scrollTo(0,0);
+}
+els('.nav-item').forEach(a=> a.onclick=()=>irPara(a.dataset.view));
+document.addEventListener('click', e=>{
+  const go=e.target.closest('[data-go]'); if(go) irPara(go.dataset.go);
+  if(e.target.closest('[data-go-new]')) openModal();
+});
+el('#btn-burger').onclick=()=>document.body.classList.add('nav-open');
+document.body.addEventListener('click', e=>{
+  if(document.body.classList.contains('nav-open') && !e.target.closest('.side') && !e.target.closest('#btn-burger'))
+    document.body.classList.remove('nav-open');
+});
+
+// menus suspensos
+document.addEventListener('click', e=>{
+  const trg=e.target.closest('[data-menu]');
+  els('.menu-list').forEach(m=>{ if(!trg || m!==trg.nextElementSibling) m.hidden=true; });
+  if(trg){ const m=trg.nextElementSibling; m.hidden=!m.hidden; return; }
+  if(e.target.closest('.menu-list button')) e.target.closest('.menu-list').hidden=true;
+});
+
+// modais: botão × / data-close, clique fora e tecla Esc
+const fechaModal = {
+  'overlay':()=>closeModal(), 'overlay-forn':()=>closeForn(), 'overlay-mov':()=>closeMov(),
+  'overlay-cfg':()=>closeCfg(), 'overlay-cons':()=>closeCons()
+};
+function fechar(ov){ (fechaModal[ov.id] || (()=>ov.classList.remove('on')))(); }
+els('.overlay').forEach(ov=>{
+  ov.addEventListener('mousedown', e=>{ if(e.target===ov) fechar(ov); });
+  ov.querySelectorAll('[data-close]').forEach(b=> b.onclick=()=>fechar(ov));
+});
+document.addEventListener('keydown', e=>{
+  if(e.key!=='Escape') return;
+  const ab=els('.overlay.on').pop();
+  if(ab){ fechar(ab); return; }
+  els('.menu-list').forEach(m=>m.hidden=true);
+  document.body.classList.remove('nav-open');
+});
+function abrir(id, foco){
+  el(id).classList.add('on');
+  const f = foco ? el(foco) : el(id).querySelector('input,select');
+  if(f) setTimeout(()=>f.focus(),30);
+}
+
+// tema
+const TEMAS=['auto','light','dark'], TEMA_TXT={auto:'Tema: automático',light:'Tema: claro',dark:'Tema: escuro'};
+function aplicaTema(t){
+  if(t==='auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.dataset.theme=t;
+  el('#tema-label').textContent=TEMA_TXT[t];
+}
+let tema = (()=>{ try{ return localStorage.getItem('cc_tema')||'auto'; }catch(e){ return 'auto'; } })();
+aplicaTema(tema);
+el('#btn-tema').onclick=()=>{
+  tema=TEMAS[(TEMAS.indexOf(tema)+1)%3]; aplicaTema(tema);
+  try{ localStorage.setItem('cc_tema',tema); }catch(e){}
+};
+
+// ---------------------------- modal pedido ----------------------------------
+let editing=null;
+function itemRow(it={sku:'',nome:'',qtd:1,preco:0}){
+  const d=document.createElement('div');
+  d.className='item-row';
+  d.innerHTML=`
+    <input class="i-sku" value="${esc(it.sku)}" placeholder="SKU" aria-label="SKU">
+    <input class="i-nome" value="${esc(it.nome)}" placeholder="Produto" aria-label="Produto">
+    <input class="i-qtd" type="number" min="1" value="${it.qtd}" aria-label="Quantidade">
+    <input class="i-preco" type="number" min="0" step="0.01" value="${it.preco}" aria-label="Preço unitário">
+    <button class="rm" title="Remover item" aria-label="Remover item">×</button>`;
+  d.querySelector('.rm').onclick=()=>{d.remove();recalc();};
+  d.querySelectorAll('input').forEach(i=>i.oninput=recalc);
+  return d;
+}
+function recalc(){
+  let t=0;
+  els('#items .item-row').forEach(r=>{ t += (+r.querySelector('.i-qtd').value||0)*(+r.querySelector('.i-preco').value||0); });
+  el('#modal-total').textContent=money(t);
+}
+// preset: { itens, fornecedor } para abrir um pedido novo já preenchido
+function openModal(p=null, preset=null){
+  editing=p;
+  renderDatalist();
+  el('#modal-title').textContent = p?('Editar '+p.num):'Novo pedido';
+  el('#f-fornecedor').value = p?p.fornecedor:((preset&&preset.fornecedor)||'');
+  el('#f-fin').value = p?p.fin:'Pendente';
+  el('#f-log').value = p?p.log:'Aguardando';
+  el('#f-cat').value = p?(p.categoria||'Mercadorias'):'Mercadorias';
+  el('#f-pag').value = p?(p.formaPag||'Boleto'):'Boleto';
+  el('#f-venc').value = p?(p.vencimento||''):somaDias(hojeISO(),30);
+  el('#f-prev').value = p?(p.previsao||''):somaDias(hojeISO(),7);
+  const box=el('#items'); box.innerHTML='';
+  const itens = p ? p.itens : ((preset&&preset.itens&&preset.itens.length) ? preset.itens : [{sku:'',nome:'',qtd:1,preco:0}]);
+  itens.forEach(it=>box.appendChild(itemRow(it)));
+  recalc();
+  abrir('#overlay', '#f-fornecedor');
+}
+function closeModal(){el('#overlay').classList.remove('on');editing=null;}
+el('#btn-new').onclick=()=>openModal();
+el('#btn-add-item').onclick=()=>{ const r=itemRow(); el('#items').appendChild(r); r.querySelector('.i-sku').focus(); };
+el('#btn-cancel').onclick=closeModal;
+el('#btn-save').onclick=()=>{
+  const itens=els('#items .item-row').map(r=>({
+    sku:r.querySelector('.i-sku').value.trim(),
+    nome:r.querySelector('.i-nome').value.trim(),
+    qtd:Math.max(0,parseInt(r.querySelector('.i-qtd').value,10)||0),
+    preco:Math.max(0,+r.querySelector('.i-preco').value||0)
+  })).filter(i=>i.nome);
+  if(!itens.length){toast('Adicione ao menos um item com nome do produto.','erro');return;}
+  if(itens.some(i=>i.qtd<=0)){toast('Todo item precisa de quantidade maior que zero.','erro');return;}
+  const fornecedor=padronizaNome(el('#f-fornecedor').value.trim());
+  const fin=el('#f-fin').value, logi=el('#f-log').value;
+  const extra={ categoria:el('#f-cat').value.trim()||'Mercadorias', formaPag:el('#f-pag').value,
+    vencimento:el('#f-venc').value, previsao:el('#f-prev').value };
+  if(editing){
+    const fornAntigo=editing.fornecedor;
+    const recPorChave={};
+    (editing.itens||[]).forEach(i=>{ recPorChave[(i.sku||'')+'|'+i.nome]=i.receb||0; });
+    editing.fornecedor=fornecedor;
+    editing.itens=itens.map(i=>({...i, receb:Math.min(recPorChave[(i.sku||'')+'|'+i.nome]||0, i.qtd)}));
+    if(fin==='Pago' && editing.fin!=='Pago' && !editing.pagoEm) editing.pagoEm=hojeISO();
+    if(fin!=='Pago') delete editing.pagoEm;
+    editing.fin=fin; editing.log=logi;
+    Object.assign(editing, extra);
+    if(!editing.emissao) editing.emissao=hojeISO();
+    atualizaLogistica(editing);
+    if(canonKey(fornAntigo)!==canonKey(fornecedor)) registraUsoFornecedor(fornecedor);
+    log('Pedido '+editing.num+' editado.');
+    toast('Pedido '+editing.num+' salvo.','ok');
+  }else{
+    const num=nextNum();
+    const novo={id:uid(),num,fornecedor,itens:itens.map(i=>({...i,receb:0})),fin,log:logi,recebido:false,...extra,emissao:hojeISO(),...(fin==='Pago'?{pagoEm:hojeISO()}:{})};
+    atualizaLogistica(novo);
+    state.pedidos.unshift(novo);
+    registraUsoFornecedor(fornecedor);
+    log('Pedido '+num+' criado — '+money(totalPedido(novo))+' — '+(fornecedor||'sem fornecedor')+'.');
+    toast('Pedido '+num+' criado.','ok');
+  }
+  recalcUsos(); save(); closeModal(); renderAll();
+};
+el('#tb-pedidos').onclick=e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  const ed=b.dataset.edit, del=b.dataset.del;
+  if(ed) openModal(state.pedidos.find(p=>p.id===ed));
+  if(del){
+    const p=state.pedidos.find(p=>p.id===del);
+    if(confirm('Excluir o pedido '+p.num+'? Essa ação não pode ser desfeita.')){
+      state.pedidos=state.pedidos.filter(x=>x.id!==del);
+      log('Pedido '+p.num+' excluído.');
+      recalcUsos(); save(); renderAll();
+      toast('Pedido '+p.num+' excluído.');
+    }
+  }
+};
+// ---------------------------- modal fornecedor ------------------------------
+let editingForn=null;
+function openForn(f=null){
+  editingForn=f;
+  el('#forn-title').textContent=f?'Editar fornecedor':'Novo fornecedor';
+  el('#fn-nome').value=f?f.nome:'';
+  el('#fn-cnpj').value=f&&f.cnpj?fmtDoc(f.cnpj):'';
+  el('#fn-contato').value=f?(f.contato||''):'';
+  abrir('#overlay-forn', f ? '#fn-cnpj' : '#fn-nome');
+}
+function closeForn(){el('#overlay-forn').classList.remove('on');editingForn=null;}
+el('#btn-new-forn').onclick=()=>openForn();
+el('#fn-cancel').onclick=closeForn;
+el('#fn-save').onclick=()=>{
+  const nome=padronizaNome(el('#fn-nome').value.trim());
+  if(!nome){toast('Informe o nome do fornecedor.','erro');return;}
+  const cnpjRaw=el('#fn-cnpj').value.trim(), cnpj=soDigitos(cnpjRaw), contato=el('#fn-contato').value.trim();
+  if(cnpjRaw && !docValido(cnpj)){ toast('CPF/CNPJ deve ter 11 ou 14 dígitos.','erro'); return; }
+  const existente=acharFornecedor(nome);
+  if(editingForn){
+    const antigo=editingForn.nome;
+    if(existente && existente!==editingForn){ toast('Já existe um fornecedor com esse nome.','erro'); return; }
+    editingForn.nome=nome; editingForn.cnpj=cnpj; editingForn.contato=contato; editingForn.manual=true; editingForn.cadastrado=true;
+    if(canonKey(antigo)!==canonKey(nome)) state.pedidos.forEach(p=>{ if(canonKey(p.fornecedor)===canonKey(antigo)) p.fornecedor=nome; });
+    log('Fornecedor "'+nome+'" atualizado.');
+  }else if(existente){
+    existente.cnpj=cnpj||existente.cnpj; existente.contato=contato||existente.contato;
+    existente.manual=true; existente.cadastrado=true;
+    log('Fornecedor "'+nome+'" complementado (já existia).');
+  }else{
+    state.fornecedores.push({id:uid(),nome,cnpj,contato,usos:0,cadastrado:true,manual:true});
+    log('Fornecedor "'+nome+'" cadastrado manualmente.');
+  }
+  recalcUsos(); save(); closeForn(); renderAll();
+  toast('Fornecedor "'+nome+'" salvo.','ok');
+};
+el('#tb-forn').onclick=e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  const ed=b.dataset.eforn, del=b.dataset.dforn;
+  if(ed) openForn(state.fornecedores.find(f=>f.id===ed));
+  if(del){
+    const f=state.fornecedores.find(f=>f.id===del);
+    const usados=state.pedidos.some(p=>canonKey(p.fornecedor)===canonKey(f.nome));
+    const msg=usados
+      ? 'O fornecedor "'+f.nome+'" está em uso por pedidos. Excluir o cadastro? Os pedidos mantêm o nome como texto.'
+      : 'Excluir o fornecedor "'+f.nome+'"?';
+    if(confirm(msg)){
+      state.fornecedores=state.fornecedores.filter(x=>x.id!==del);
+      log('Fornecedor "'+f.nome+'" excluído.');
+      save(); renderAll();
+    }
+  }
+};
+// ---------------------------- recebimento item a item -----------------------
+el('#tb-receb').onclick=e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  const ref=b.dataset.recebItem||b.dataset.recebTudo; if(!ref) return;
+  const [pid,idxStr]=ref.split(':'); const idx=+idxStr;
+  const p=state.pedidos.find(p=>p.id===pid); if(!p) return;
+  const it=p.itens[idx]; if(!it) return;
+  const antes=it.receb||0, restante=it.qtd-antes;
+  if(b.dataset.recebTudo){
+    it.receb=it.qtd;
+  }else{
+    const inp=b.closest('tr').querySelector('.rq');
+    const q=parseInt(inp.value,10);
+    if(isNaN(q)||q<=0){ toast('Informe uma quantidade maior que zero.','erro'); inp.focus(); return; }
+    if(q>restante){ toast('Restam só '+restante+' unidade(s) de "'+it.nome+'".','erro'); inp.value=restante; inp.focus(); return; }
+    it.receb=antes+q;
+  }
+  const delta=(it.receb||0)-antes;
+  atualizaLogistica(p);
+  if(delta>0){
+    registraMovimentacao({sku:it.sku, produto:it.nome, tipo:'entrada', quantidade:delta, fornecedor:p.fornecedor, origem:'Recebimento '+p.num});
+    registraEntradaEstoque(p, it, delta, restante);
+  }
+  const status = p.recebido ? 'concluído' : 'parcial ('+totalRecebido(p)+'/'+totalQtd(p)+')';
+  log('Recebimento '+status+' — '+p.num+' / '+it.nome+' ('+it.receb+'/'+it.qtd+').');
+  save(); renderReceb(); renderPedidos(); renderMov(); renderEstoque();
+  const auto=el('#fr-auto').checked && delta>0;
+  toast((p.recebido ? 'Pedido '+p.num+' recebido por completo.' : delta+'x '+it.nome+' recebido(s).')+(auto?' Enviando ao Estoque…':' Entrada pronta para o Estoque.'),'ok');
+  if(auto) entradaAutomatica();
+};
+// ================= MOVIMENTAÇÕES =============================================
+function hojeISO(){ const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); }
+const CSV_CORE = ['SKU','Nome','Quantidade','Preço','Fornecedor'];
+const CSV_SEP = ';';
+function csvEsc(v){ v=String(v==null?'':v); return '"'+v.replace(/"/g,'""')+'"'; }
+function br(n){ return (Number(n)||0).toFixed(2).replace('.',','); }
+function csvHeader(extraCols){ return CSV_CORE.concat(extraCols||[]).map(csvEsc).join(CSV_SEP)+'\n'; }
+function csvRow(core, extras){
+  const base=CSV_CORE.map(c=> csvEsc(core[c]!=null ? core[c] : ''));
+  return base.concat((extras||[]).map(csvEsc)).join(CSV_SEP)+'\n';
+}
+function normalizaTipo(t){
+  const s=semAcento(t).toLowerCase().trim();
+  if(s.startsWith('sa') || s==='out' || s==='s') return 'saida';
+  return 'entrada';
+}
+function registraMovimentacao(m){
+  const mov={ id:uid(), data:m.data || hojeISO(), tipo:normalizaTipo(m.tipo), sku:(m.sku||'').trim(),
+    produto:(m.produto||'').trim(), quantidade:Math.abs(parseInt(m.quantidade,10)||0),
+    fornecedor:(m.fornecedor||'').trim(), origem:(m.origem||'').trim() };
+  if(mov.quantidade<=0) return null;
+  state.movimentacoes.unshift(mov);
+  return mov;
+}
+const fm = { q:'', tipo:'' };
+function renderMov(){
+  const q=canonKey(fm.q);
+  const lista=[...state.movimentacoes]
+    .filter(m=>(!fm.tipo || m.tipo===fm.tipo) && contem(q, m.sku, m.produto, m.fornecedor, m.origem))
+    .sort((a,b)=> (a.data<b.data?1:a.data>b.data?-1:0));
+  el('#fm-meta').textContent = state.movimentacoes.length ? lista.length+' movimentação(ões)' : '';
+  el('#empty-mov').hidden = lista.length>0;
+  el('#tb-mov').innerHTML = lista.map(m=>`<tr>
+      <td class="dim">${esc(fmtData(m.data))}</td>
+      <td>${m.tipo==='entrada'?'<span class="badge b-green">Entrada</span>':'<span class="badge b-amber">Saída</span>'}</td>
+      <td><span class="code">${esc(m.sku)||'<span class="faint">—</span>'}</span></td>
+      <td>${esc(m.produto)||'<span class="faint">—</span>'}</td>
+      <td class="r">${m.quantidade}</td>
+      <td>${esc(m.fornecedor)||'<span class="faint">—</span>'}</td>
+      <td class="dim">${esc(m.origem)||'—'}</td>
+      <td><div class="acts"><button class="act red" data-del-mov="${m.id}">Excluir</button></div></td>
+    </tr>`).join('');
+}
+el('#fm-q').oninput=e=>{ fm.q=e.target.value; renderMov(); };
+el('#fm-tipo').onchange=e=>{ fm.tipo=e.target.value; renderMov(); };
+function openMov(){
+  renderDatalist();
+  el('#mv-tipo').value='entrada'; el('#mv-qtd').value='1';
+  el('#mv-sku').value=''; el('#mv-produto').value='';
+  el('#mv-fornecedor').value=''; el('#mv-origem').value='Ajuste manual';
+  abrir('#overlay-mov', '#mv-sku');
+}
+function closeMov(){ el('#overlay-mov').classList.remove('on'); }
+el('#btn-mov-new').onclick=openMov;
+el('#mv-cancel').onclick=closeMov;
+el('#mv-save').onclick=()=>{
+  const produto=el('#mv-produto').value.trim();
+  const qtd=parseInt(el('#mv-qtd').value,10)||0;
+  if(!produto){ toast('Informe o produto.','erro'); return; }
+  if(qtd<=0){ toast('Quantidade deve ser maior que zero.','erro'); return; }
+  const m=registraMovimentacao({ tipo:el('#mv-tipo').value, sku:el('#mv-sku').value, produto, quantidade:qtd,
+    fornecedor:padronizaNome(el('#mv-fornecedor').value), origem:el('#mv-origem').value || 'Ajuste manual' });
+  log('Movimentação manual: '+m.tipo+' de '+m.quantidade+'x '+m.produto+'.');
+  save(); closeMov(); renderMov();
+  toast('Movimentação registrada.','ok');
+};
+el('#tb-mov').onclick=e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  const del=b.dataset.delMov; if(!del) return;
+  const m=state.movimentacoes.find(x=>x.id===del);
+  if(confirm('Excluir esta movimentação ('+(m.tipo==='entrada'?'entrada':'saída')+' de '+m.quantidade+'x '+(m.produto||m.sku)+')?')){
+    state.movimentacoes=state.movimentacoes.filter(x=>x.id!==del);
+    log('Movimentação excluída.');
+    save(); renderMov();
+  }
+};
+el('#btn-mov-export').onclick=()=>{
+  const grupos = agrupaMovimentacoes().map(g=>({ base:[g.data, g.tipo==='entrada'?'Entrada':'Saída', g.origem, g.fornecedor], itens:g.itens }));
+  exportarPivotado('movimentacoes.csv', ['Data','Tipo','Origem','Fornecedor'], ['SKU','Nome','Quantidade'], grupos, {
+    vazio:'Nenhuma movimentação para exportar.',
+    log:(n,max)=> 'Exportado CSV de movimentações ('+n+' grupo(s), até '+max+' item(ns) em colunas).',
+    toastMsg:n=> n+' grupo(s) de movimentações exportado(s).'
+  });
+};
+el('#btn-mov-modelo').onclick=()=>{
+  let out=csvHeader(['Tipo','Data','Origem']);
+  out+=csvRow({SKU:'A100','Nome':'Papel A4 75g','Quantidade':50,'Fornecedor':'Distribuidora Sul Ltda'}, ['entrada', hojeISO(), 'Compra']);
+  out+=csvRow({SKU:'A250','Nome':'Caneta azul','Quantidade':10,'Fornecedor':''}, ['saida', hojeISO(), 'Consumo interno']);
+  download('modelo_movimentacoes.csv', out);
+  toast('Modelo baixado. Preencha e importe em "Importar CSV".');
+};
+function parseMovCSV(text){
+  const clean=text.replace(/^\uFEFF/,'').trim();
+  const delim=detectaDelim(clean.split(/\r?\n/)[0]||'');
+  const lines=clean.split(/\r?\n/).filter(l=>l.trim());
+  const head=splitCSVLine(lines.shift(), delim).map(h=>h.trim().toLowerCase());
+  const idx=pref=>head.findIndex(h=>h.startsWith(pref));
+  const iSku=idx('sku'), iProd=idx('produto')>=0?idx('produto'):idx('nome'),
+        iTipo=idx('tipo'), iQtd=idx('quant'), iData=idx('data'), iOrig=idx('orig'), iForn=idx('fornec');
+  return {
+    faltando:(iProd<0?['produto']:[]).concat(iTipo<0?['tipo']:[]).concat(iQtd<0?['quantidade']:[]),
+    linhas: lines.map(l=>{
+      const c=splitCSVLine(l, delim);
+      return { sku:(c[iSku]||'').trim(), produto:(c[iProd]||'').trim(), tipo:(c[iTipo]||'').trim(),
+        quantidade:(c[iQtd]||'').trim(), data:(c[iData]||'').trim(),
+        fornecedor:(iForn>=0?(c[iForn]||''):'').trim(), origem:(c[iOrig]||'').trim() };
+    })
+  };
+}
+el('#btn-mov-import').onclick=()=>el('#file-mov').click();
+el('#file-mov').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    e.target.value='';
+    let parsed;
+    try{ parsed=parseMovCSV(r.result); }
+    catch(err){ toast('Não consegui ler o CSV. Use o modelo como referência.','erro'); return; }
+    if(parsed.faltando.length){ toast('Faltam colunas no CSV: '+parsed.faltando.join(', ')+'. Baixe o modelo.','erro'); return; }
+    let n=0;
+    parsed.linhas.forEach(l=>{ if(!l.produto && !l.sku) return; if(registraMovimentacao(l)) n++; });
+    if(!n){ toast('Nenhuma linha válida encontrada no CSV.','erro'); return; }
+    log('CSV de movimentações importado ('+n+' registro(s)).');
+    save(); renderMov();
+    toast(n+' movimentação(ões) importada(s).','ok');
+  };
+  r.readAsText(f,'utf-8');
+};
+// ================= IMPORTADOR GENÉRICO DE CSV ================================
+function splitCSVLine(line, delim){
+  const out=[]; let cur=''; let dentro=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){ if(dentro && line[i+1]==='"'){ cur+='"'; i++; } else dentro=!dentro; }
+    else if(ch===delim && !dentro){ out.push(cur); cur=''; }
+    else cur+=ch;
+  }
+  out.push(cur);
+  return out.map(s=>s.trim());
+}
+function detectaDelim(linha){
+  const cont={';':0,',':0,'\t':0}; let dentro=false;
+  for(let i=0;i<linha.length;i++){
+    const ch=linha[i];
+    if(ch==='"') dentro=!dentro;
+    else if(!dentro && cont[ch]!=null) cont[ch]++;
+  }
+  return Object.keys(cont).reduce((a,b)=> cont[b]>cont[a]?b:a, ';');
+}
+function parseCSVGenerico(text){
+  const clean=text.replace(/^\uFEFF/,'').replace(/\r/g,'').trim();
+  if(!clean) return {colunas:[], linhas:[]};
+  const linhasTxt=clean.split('\n').filter(l=>l.trim().length);
+  const delim=detectaDelim(linhasTxt[0]);
+  let colunas=splitCSVLine(linhasTxt.shift(), delim).map((c,i)=> c || ('coluna_'+(i+1)));
+  const vistos={};
+  colunas=colunas.map(c=>{ if(vistos[c]!=null){ vistos[c]++; return c+'_'+vistos[c]; } vistos[c]=0; return c; });
+  const linhas=linhasTxt.map(l=>{
+    const vals=splitCSVLine(l, delim); const obj={};
+    colunas.forEach((c,i)=> obj[c]=(vals[i]!=null?vals[i]:''));
+    return obj;
+  });
+  return {colunas, linhas, delim};
+}
+function renderImportados(){
+  el('#empty-importados').hidden = state.importados.length>0;
+  el('#tb-importados').innerHTML = state.importados.map(d=>`<tr>
+      <td>${esc(d.arquivo)}</td>
+      <td><span class="badge b-slate">${d.colunas.length}</span> <span class="dim">${esc(d.colunas.slice(0,4).join(', '))}${d.colunas.length>4?'…':''}</span></td>
+      <td class="r">${d.linhas.length}</td>
+      <td class="dim small">${esc(d.ts)}</td>
+      <td><div class="acts"><button class="act" data-ver="${d.id}">Ver</button><button class="act muted" data-exp-ds="${d.id}">Exportar</button><button class="act red" data-del-ds="${d.id}">Excluir</button></div></td>
+    </tr>`).join('');
+}
+function datasetParaCSV(d){
+  const e=v=>{ v=String(v==null?'':v); return /[;\n"]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; };
+  let out=d.colunas.join(';')+'\n';
+  d.linhas.forEach(row=> out+=d.colunas.map(c=>e(row[c])).join(';')+'\n');
+  return out;
+}
+function verDataset(id){
+  const d=state.importados.find(x=>x.id===id); if(!d) return;
+  el('#ds-title').textContent=d.arquivo;
+  el('#ds-meta').textContent=d.colunas.length+' coluna(s), '+d.linhas.length+' linha(s), importado em '+d.ts;
+  const thead=el('#ds-table').querySelector('thead'), tbody=el('#ds-table').querySelector('tbody');
+  thead.innerHTML='<tr>'+d.colunas.map(c=>`<th>${esc(c)}</th>`).join('')+'</tr>';
+  const limite=Math.min(d.linhas.length,200);
+  let html='';
+  for(let i=0;i<limite;i++) html+='<tr>'+d.colunas.map(c=>`<td>${esc(d.linhas[i][c]??'')}</td>`).join('')+'</tr>';
+  tbody.innerHTML=html;
+  if(d.linhas.length>limite) el('#ds-meta').textContent+='. Exibindo as primeiras '+limite+' linhas.';
+  el('#ds-export').onclick=()=>download(d.arquivo.replace(/\.csv$/i,'')+'_reexport.csv', datasetParaCSV(d));
+  abrir('#overlay-ds', '#ds-close');
+}
+el('#ds-close').onclick=()=>el('#overlay-ds').classList.remove('on');
+el('#btn-import-generico').onclick=()=>el('#file-generic').click();
+el('#file-generic').onchange=e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    e.target.value='';
+    let ds;
+    try{ ds=parseCSVGenerico(r.result); }catch(err){ toast('Não consegui ler o CSV.','erro'); return; }
+    if(!ds.linhas.length){ toast('CSV vazio ou sem linhas de dados.','erro'); return; }
+    const registro={ id:uid(), arquivo:f.name||'importado.csv', colunas:ds.colunas, linhas:ds.linhas, delim:ds.delim, ts:new Date().toLocaleString('pt-BR') };
+    state.importados.unshift(registro);
+    save();
+    log('CSV genérico importado — "'+registro.arquivo+'" ('+ds.colunas.length+' col., '+ds.linhas.length+' linhas).');
+    renderImportados();
+    toast('"'+registro.arquivo+'" importado.','ok');
+  };
+  r.readAsText(f,'utf-8');
+};
+el('#tb-importados').onclick=e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  const ver=b.dataset.ver, exp=b.dataset.expDs, del=b.dataset.delDs;
+  if(ver) verDataset(ver);
+  if(exp){ const d=state.importados.find(x=>x.id===exp); if(d) download(d.arquivo.replace(/\.csv$/i,'')+'_reexport.csv', datasetParaCSV(d)); }
+  if(del){
+    const d=state.importados.find(x=>x.id===del);
+    if(confirm('Excluir o CSV importado "'+d.arquivo+'"?')){
+      state.importados=state.importados.filter(x=>x.id!==del);
+      log('CSV importado "'+d.arquivo+'" removido.');
+      save(); renderImportados();
+    }
+  }
+};
+// ---------------------------- CSV do Estoque -> pedidos ---------------------
+function parseCSV(text){
+  const clean=text.replace(/^\uFEFF/,'').trim();
+  const delim = detectaDelim(clean.split(/\r?\n/)[0]||'');
+  const lines=clean.split(/\r?\n/).filter(l=>l.trim());
+  const head=splitCSVLine(lines.shift(), delim).map(h=>h.trim().toLowerCase());
+  const idx=name=>head.findIndex(h=>h.startsWith(name));
+  return lines.map(l=>{
+    const c=splitCSVLine(l, delim);
+    return {
+      sku:(c[idx('sku')]||'').trim(),
+      nome:(c[idx('nome')]||c[idx('produto')]||'').trim(),
+      qtd: parseFloat((c[idx('quant')]||'0').replace(',','.'))||0,
+      preco: parseFloat((c[idx('pre')]||'0').replace(/[^\d,.-]/g,'').replace(',','.'))||0,
+      min: parseFloat((c[idx('estoque m')]||c[idx('mín')]||c[idx('min')]||'0').replace(',','.'))||0,
+      situacao:(c[idx('situa')]||'').trim().toLowerCase(),
+      fornecedor:(c[idx('fornec')]||'').trim()
+    };
+  });
+}
+function validaCabecalhoEstoque(text){
+  const clean=text.replace(/^\uFEFF/,'').trim();
+  if(!clean) return {ok:false, msg:'O arquivo está vazio.'};
+  const primeira=clean.split(/\r?\n/)[0]||'';
+  const head=splitCSVLine(primeira, detectaDelim(primeira)).map(h=>h.trim().toLowerCase());
+  const tem=pref=>head.some(h=>h.startsWith(pref));
+  const faltando=[];
+  if(!tem('nome') && !tem('produto')) faltando.push('Nome');
+  if(!tem('quant')) faltando.push('Quantidade');
+  if(faltando.length) return {ok:false, msg:'Faltam colunas no CSV: '+faltando.join(', ')+'. Baixe o modelo para ver o formato.'};
+  return {ok:true};
+}
+el('#btn-import').onclick=()=>el('#file-input').click();
+el('#file-input').onchange=e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    e.target.value='';
+    const check=validaCabecalhoEstoque(r.result);
+    if(!check.ok){ toast(check.msg,'erro'); return; }
+    let rows;
+    try{ rows=parseCSV(r.result); }catch(err){ toast('Não consegui ler o CSV. Verifique se está no formato do modelo.','erro'); return; }
+    if(!rows.length){ toast('O CSV tem só o cabeçalho, sem linhas de dados.','erro'); return; }
+    const grupos={};
+    rows.forEach(x=>{
+      if(!x.nome && !x.sku) return;
+      const forn = padronizaNome(x.fornecedor) || '(importado do Estoque)';
+      const qtdSugerida = (x.min>0 && x.qtd<x.min) ? Math.ceil(x.min - x.qtd) : (x.qtd || x.min || 1);
+      (grupos[forn] = grupos[forn] || []).push({ sku:x.sku, nome:x.nome, qtd:Math.max(1, Math.round(qtdSugerida)), preco:x.preco, receb:0 });
+    });
+    const nums=[]; let totalItens=0;
+    Object.keys(grupos).forEach(forn=>{
+      const num=nextNum();
+      state.pedidos.unshift({id:uid(),num,fornecedor:forn,itens:grupos[forn],fin:'Pendente',log:'Aguardando',recebido:false,
+        emissao:hojeISO(), previsao:somaDias(hojeISO(),7)});
+      registraUsoFornecedor(forn);
+      nums.push(num); totalItens+=grupos[forn].length;
+    });
+    if(!totalItens){ toast('CSV lido, mas sem itens válidos (linhas sem nome ou SKU).','erro'); return; }
+    log('CSV importado — '+nums.length+' pedido(s) gerado(s) ('+nums.join(', ')+') com '+totalItens+' item(ns).');
+    recalcUsos(); save(); renderAll();
+    toast(nums.length+' pedido(s) criado(s) com '+totalItens+' item(ns).','ok');
+  };
+  r.readAsText(f,'utf-8');
+};
+el('#btn-modelo-estoque').onclick=()=>{
+  let out=csvHeader([]);
+  out+=csvRow({SKU:'A100','Nome':'Papel A4 75g','Quantidade':5,'Preço':br(22.90),'Fornecedor':'Distribuidora Sul Ltda'});
+  out+=csvRow({SKU:'A250','Nome':'Caneta azul','Quantidade':300,'Preço':br(1.40), 'Fornecedor':'Atacado Sul'});
+  out+=csvRow({SKU:'B300','Nome':'Detergente 5L','Quantidade':2,'Preço':br(18.00),'Fornecedor':'Atacado Sul'});
+  download('modelo_estoque.csv', out);
+  toast('Modelo baixado. Preencha e importe em "Importar CSV do Estoque".');
+};
+function download(name, content){
+  const blob=new Blob([BOM+content],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+el('#btn-export').onclick=()=>{
+  if(!state.pedidos.length){toast('Nenhum pedido para exportar.','erro');return;}
+  const grupos = state.pedidos.map(p=>({ base:[p.num, p.fornecedor, p.fin, p.log, br(totalPedido(p))], itens:p.itens.map(i=>[i.sku, i.nome, i.qtd, br(i.preco)]) }));
+  exportarPivotado('compras_pedidos.csv', ['Pedido','Fornecedor','Financeiro','Logística','Valor total'], ['SKU','Nome','Quantidade','Preço'], grupos, {
+    log:(n,max)=> 'Exportado CSV de pedidos ('+n+' pedido(s), até '+max+' item(ns) em colunas).',
+    toastMsg:n=> n+' pedido(s) exportado(s).'
+  });
+};
+function normCol(c){ return semAcento(c).toLowerCase().trim(); }
+function achaColuna(colunas, prefixos){
+  for(const pref of prefixos){ const idx=colunas.findIndex(c=>normCol(c).startsWith(pref)); if(idx>=0) return colunas[idx]; }
+  return null;
+}
+function linhaTudo(vals){ return vals.map(csvEsc).join(CSV_SEP)+'\n'; }
+function exportarPivotado(nomeArquivo, baseCols, itemCols, grupos, opts){
+  opts = opts||{};
+  if(!grupos.length){ toast(opts.vazio || 'Nada para exportar.','erro'); return null; }
+  let maxItens = 0;
+  grupos.forEach(g=> maxItens = Math.max(maxItens, g.itens.length));
+  const header = baseCols.slice();
+  for(let i=1;i<=maxItens;i++) itemCols.forEach(c=> header.push(i===1 ? c : ('Item '+i+' '+c)));
+  let out = linhaTudo(header);
+  grupos.forEach(g=>{
+    const vals = g.base.slice();
+    for(let i=0;i<maxItens;i++){ const it=g.itens[i]; itemCols.forEach((c,ci)=> vals.push(it ? (it[ci]==null?'':it[ci]) : '')); }
+    out += linhaTudo(vals);
+  });
+  download(nomeArquivo, out);
+  if(opts.log) log(opts.log(grupos.length, maxItens));
+  if(opts.toastMsg) toast(opts.toastMsg(grupos.length, maxItens),'ok');
+  return {linhas:grupos.length, maxItens};
+}
+function agrupaMovimentacoes(){
+  const mapa=new Map();
+  [...state.movimentacoes].reverse().forEach(m=>{
+    const chave = m.data+'|'+m.tipo+'|'+m.origem+'|'+m.fornecedor;
+    if(!mapa.has(chave)) mapa.set(chave, { data:m.data, tipo:m.tipo, origem:m.origem, fornecedor:m.fornecedor, itens:[] });
+    mapa.get(chave).itens.push([m.sku, m.produto, m.quantidade]);
+  });
+  return [...mapa.values()];
+}
+el('#btn-export-tudo').onclick=()=>{
+  const grupos=[];
+  state.pedidos.forEach(p=> grupos.push({ base:['Pedidos', p.num, p.fornecedor, 'Financeiro: '+p.fin+' | Logística: '+p.log], itens:p.itens.map(i=>[i.sku, i.nome, i.qtd, br(i.preco)]) }));
+  state.pedidos.forEach(p=>{
+    const recebidos = p.itens.filter(i=>(i.receb||0)>0);
+    if(recebidos.length) grupos.push({ base:['Recebimentos', p.num, p.fornecedor, 'Situação: '+p.log], itens:recebidos.map(i=>[i.sku, i.nome, i.receb, br(i.preco)]) });
+  });
+  agrupaMovimentacoes().forEach(g=> grupos.push({ base:['Movimentações', (g.tipo==='entrada'?'Entrada':'Saída')+' — '+g.data, g.fornecedor, 'Origem: '+(g.origem||'—')], itens:g.itens.map(it=>[it[0], it[1], it[2], '']) }));
+  state.importados.forEach(d=>{
+    if(!d.linhas.length) return;
+    const cSku=achaColuna(d.colunas,['sku']), cNome=achaColuna(d.colunas,['nome','produto']), cQtd=achaColuna(d.colunas,['quant']), cPreco=achaColuna(d.colunas,['pre']);
+    grupos.push({ base:['Importados', d.arquivo, '', d.linhas.length+' linha(s) do arquivo'],
+      itens:d.linhas.map(row=>[cSku?row[cSku]:'', cNome?row[cNome]:'', cQtd?row[cQtd]:'', cPreco?row[cPreco]:'']) });
+  });
+  exportarPivotado('todos_os_itens.csv', ['Aba','Referência','Fornecedor','Detalhes'], ['SKU','Nome','Quantidade','Preço'], grupos, {
+    vazio:'Nada para exportar ainda.',
+    log:(n,max)=> 'Exportado CSV consolidado de todos os itens ('+n+' grupo(s), até '+max+' item(ns) em colunas).',
+    toastMsg:n=> n+' grupo(s) exportado(s) de todas as abas.'
+  });
+};
+// ---------------------------- entrada p/ Estoque (CSV combinado) ------------
+function gerarEntradaEstoque(){
+  const soma=new Map();
+  state.pedidos.forEach(p=>p.itens.forEach(i=>{
+    const q=i.receb||0; if(q<=0) return;
+    const k=canonKey(i.nome);
+    const r=soma.get(k)||{produto:i.nome, quantidade:0};
+    r.quantidade+=q; soma.set(k,r);
+  }));
+  if(!soma.size){ toast('Nenhum recebimento registrado ainda.','erro'); return null; }
+  return [...soma.values()];
+}
+el('#btn-export-entrada').onclick=()=>{
+  const itens=gerarEntradaEstoque(); if(!itens) return;
+  const limpa=v=>String(v==null?'':v).replace(/[;\r\n"]/g,' ').trim();
+  let out='Produto;Quantidade\n';
+  itens.forEach(r=> out+=limpa(r.produto)+';'+r.quantidade+'\n');
+  download('estoque_entrada.csv', out);
+  log('Exportado CSV de entrada p/ Estoque ('+itens.length+' produto(s)).');
+  toast(itens.length+' produto(s) exportado(s) para o Estoque.','ok');
+};
+el('#btn-sock-entrada').onclick=async()=>{
+  const itens=gerarEntradaEstoque(); if(!itens) return;
+  const msg={origem:ORIGEM, destino:'estoque', tipo:'entrada', data:hojeISO(), itens:itens.map(r=>({produto:r.produto, quantidade:r.quantidade}))};
+  if(await sockEnviar(destEst()+' '+JSON.stringify(msg), 'entrada p/ Estoque')) toast(itens.length+' produto(s) enviado(s) ao Estoque via socket.','ok');
+};
+el('#btn-export-registros').onclick=()=>{
+  const hoje=hojeISO(), grupos=[];
+  state.pedidos.forEach(p=>{
+    const recebidos = p.itens.filter(i=>(i.receb||0)>0);
+    if(recebidos.length) grupos.push({ base:[p.num, p.fornecedor, p.fin, p.log, hoje], itens:recebidos.map(i=>[i.sku, i.nome, i.receb, br(i.preco), br(i.receb*i.preco)]) });
+  });
+  exportarPivotado('recebidos_registros.csv', ['Pedido','Fornecedor','Financeiro','Situação pedido','Data'], ['SKU','Nome','Qtde recebida','Preço','Valor recebido'], grupos, {
+    vazio:'Nenhum item recebido para registrar.',
+    log:(n,max)=> 'Exportado CSV de registros de recebidos ('+n+' pedido(s), até '+max+' item(ns) em colunas).',
+    toastMsg:n=> n+' pedido(s) exportado(s).'
+  });
+};
+// ================= FINANCEIRO — XML Finanweb ================================
+const NS_SAIDA='urn:finanweb:saida:2.0';
+const NS_PEND='urn:finanweb:pendencias-fornecedor:1.0';
+const ORIGEM='compras';
+const soDigitos = s => String(s||'').replace(/\D/g,'');
+const docValido = d => /^(\d{11}|\d{14})$/.test(d||'');
+const xmlEsc = v => String(v==null?'':v).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+const txt120 = s => String(s||'').replace(/\s+/g,' ').trim().slice(0,120).trim();
+const centavos = n => Math.round((Number(n)||0)*100);
+const dec2 = n => (centavos(n)/100).toFixed(2);
+const isoOk = d => /^\d{4}-\d{2}-\d{2}$/.test(d||'');
+function somaDias(iso,n){ const d=new Date(iso+'T12:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+function fmtData(iso){ return isoOk(iso) ? iso.split('-').reverse().join('/') : (iso||'—'); }
+function fmtDataHora(iso){ const d=new Date(iso); return isNaN(d) ? (iso||'—') : d.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+function fmtDoc(d){
+  d=soDigitos(d);
+  if(d.length===14) return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,'$1.$2.$3/$4-$5');
+  if(d.length===11) return d.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/,'$1.$2.$3-$4');
+  return d;
+}
+function downloadXML(name, content){
+  const blob=new Blob([content],{type:'application/xml;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+const statusSaida = fin => fin==='Pago' ? 'CONFIRMADO' : 'PENDENTE';
+const umaLinha = xml => xml.replace(/<!--[\s\S]*?-->/g,'').replace(/>\s+</g,'><').replace(/\r?\n/g,' ').trim();
+
+function openCfg(){
+  const c=state.config||{};
+  el('#cfg-empresa').value=c.empresa||'';
+  el('#cfg-cnpj').value=c.cnpj?fmtDoc(c.cnpj):'';
+  el('#cfg-usuario').value=c.usuario||'';
+  abrir('#overlay-cfg');
+}
+function closeCfg(){ el('#overlay-cfg').classList.remove('on'); }
+el('#btn-fin-config').onclick=openCfg;
+el('#cfg-cancel').onclick=closeCfg;
+el('#cfg-save').onclick=()=>{
+  const empresa=txt120(el('#cfg-empresa').value), cnpj=soDigitos(el('#cfg-cnpj').value), usuario=txt120(el('#cfg-usuario').value);
+  if(!empresa){ toast('Informe a empresa.','erro'); return; }
+  if(!/^\d{14}$/.test(cnpj)){ toast('O CNPJ da empresa deve ter 14 dígitos.','erro'); return; }
+  if(!usuario){ toast('Informe o usuário.','erro'); return; }
+  state.config={empresa,cnpj,usuario};
+  log('Dados da empresa atualizados.');
+  save(); closeCfg(); renderFin();
+  toast('Dados da empresa salvos.','ok');
+};
+function gerarSaidaXML(){
+  const c=state.config||{};
+  if(!c.empresa || !/^\d{14}$/.test(c.cnpj||'') || !c.usuario){ toast('Preencha os dados da empresa antes de exportar.','erro'); openCfg(); return null; }
+  const despesas=[], pulados=[];
+  state.pedidos.forEach(p=>{
+    const f=acharFornecedor(p.fornecedor);
+    const doc=soDigitos(f && f.cnpj), nome=txt120(p.fornecedor);
+    if(!nome || !docValido(doc) || totalPedido(p)<0){ pulados.push(p.num); return; }
+    const emissao=isoOk(p.emissao) ? p.emissao : hojeISO();
+    // saida-v2: em CONFIRMADO, o vencimento é a data em que foi pago
+    const venc = p.fin==='Pago'
+      ? (isoOk(p.pagoEm) ? p.pagoEm : (isoOk(p.vencimento) && p.vencimento<=hojeISO() ? p.vencimento : hojeISO()))
+      : (isoOk(p.vencimento) ? p.vencimento : somaDias(emissao,30));
+    despesas.push({ ref:p.num, status:statusSaida(p.fin), fornecedor:nome, doc, categoria:txt120(p.categoria)||'Mercadorias',
+      valor:totalPedido(p), pagamento:txt120(p.formaPag)||'Boleto', emissao, venc });
+  });
+  if(!despesas.length){ toast('Nenhum pedido exportável: cadastre o CPF/CNPJ dos fornecedores.','erro'); return null; }
+  const totalCent=despesas.reduce((s,d)=>s+centavos(d.valor),0);
+  let x='<?xml version="1.0" encoding="UTF-8"?>\n';
+  x+='<!-- Compras -> Financeiro: compras que viram contas a pagar. Schema: saida-v2.xsd -->\n';
+  x+='<movimento xmlns="'+NS_SAIDA+'" versao="2.0" tipo="SAIDA">\n';
+  x+='  <cabecalho>\n';
+  x+='    <empresa>'+xmlEsc(c.empresa)+'</empresa>\n';
+  x+='    <cnpj>'+c.cnpj+'</cnpj>\n';
+  x+='    <origem>'+ORIGEM+'</origem>\n';
+  x+='    <dataArquivo>'+hojeISO()+'</dataArquivo>\n';
+  x+='    <usuario>'+xmlEsc(c.usuario)+'</usuario>\n';
+  x+='  </cabecalho>\n';
+  x+='  <despesas>\n';
+  despesas.forEach(d=>{
+    x+='    <despesa referencia="'+xmlEsc(d.ref)+'" status="'+d.status+'">\n';
+    x+='      <fornecedor documento="'+d.doc+'">'+xmlEsc(d.fornecedor)+'</fornecedor>\n';
+    x+='      <categoria>'+xmlEsc(d.categoria)+'</categoria>\n';
+    x+='      <valor>'+dec2(d.valor)+'</valor>\n';
+    x+='      <formaPagamento>'+xmlEsc(d.pagamento)+'</formaPagamento>\n';
+    x+='      <dataEmissao>'+d.emissao+'</dataEmissao>\n';
+    x+='      <vencimento>'+d.venc+'</vencimento>\n';
+    x+='    </despesa>\n';
+  });
+  x+='  </despesas>\n';
+  x+='  <totalizador>\n';
+  x+='    <qtdRegistros>'+despesas.length+'</qtdRegistros>\n';
+  x+='    <valorTotalGeral>'+(totalCent/100).toFixed(2)+'</valorTotalGeral>\n';
+  x+='  </totalizador>\n';
+  x+='</movimento>\n';
+  return {xml:x, qtd:despesas.length, total:totalCent/100, pulados};
+}
+function resumoSaida(r){
+  return r.qtd+' despesa(s), '+money(r.total)+(r.pulados.length?' — ignorados sem CPF/CNPJ do fornecedor: '+r.pulados.join(', '):'');
+}
+el('#btn-fin-saida').onclick=()=>{
+  const r=gerarSaidaXML(); if(!r) return;
+  downloadXML('saida-v2_'+hojeISO()+'.xml', r.xml);
+  regXml({ direcao:'enviado', via:'arquivo', xml:r.xml });
+  log('Exportado XML saida-v2 ('+resumoSaida(r)+').');
+  toast(r.qtd+' despesa(s) exportada(s)'+(r.pulados.length?'. '+r.pulados.length+' pedido(s) sem CPF/CNPJ ficaram de fora.':'.'),'ok');
+};
+el('#btn-fin-saida-sock').onclick=async()=>{
+  const r=gerarSaidaXML(); if(!r) return;
+  if(await sockEnviarArquivo(r.xml, 'saida-v2_'+hojeISO()+'_'+Date.now().toString(36)+'.xml', destFin(), 'saida-v2 ('+resumoSaida(r)+')'))
+    toast(r.qtd+' despesa(s) enviada(s) ao Financeiro'+(r.pulados.length?'. '+r.pulados.length+' sem CPF/CNPJ ficaram de fora.':'.')+' O Finanweb responde no chat se aceitou.','ok');
+};
+function openCons(){
+  const sel=el('#cons-forn');
+  sel.innerHTML='<option value="">Todos os fornecedores</option>';
+  state.fornecedores.filter(f=>docValido(soDigitos(f.cnpj))).sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(f=>{
+    const o=document.createElement('option'); o.value=soDigitos(f.cnpj); o.textContent=f.nome+' — '+fmtDoc(f.cnpj); sel.appendChild(o);
+  });
+  abrir('#overlay-cons');
+}
+function closeCons(){ el('#overlay-cons').classList.remove('on'); }
+el('#btn-fin-consulta').onclick=openCons;
+el('#cons-cancel').onclick=closeCons;
+function gerarConsultaXML(){
+  const doc=el('#cons-forn').value;
+  state.consultaSeq=(state.consultaSeq||0)+1;
+  const id='compras-'+String(state.consultaSeq).padStart(6,'0');
+  let x='<?xml version="1.0" encoding="UTF-8"?>\n';
+  x+='<!-- Compras -> Financeiro: o que está em aberto com o fornecedor? Sem <documento>, todos.\n';
+  x+='     Schema: pendencias-fornecedor-v1.xsd -->\n';
+  x+='<consultaPendencias xmlns="'+NS_PEND+'" versao="1.0" id="'+id+'">\n';
+  x+='  <origem>'+ORIGEM+'</origem>\n';
+  if(doc) x+='  <documento>'+doc+'</documento>\n';
+  x+='</consultaPendencias>\n';
+  state.consultas.unshift({id, documento:doc, ts:new Date().toLocaleString('pt-BR')});
+  state.consultas=state.consultas.slice(0,50);
+  return {id, doc, xml:x, alvo:doc?fmtDoc(doc):'todos os fornecedores'};
+}
+el('#cons-gerar').onclick=()=>{
+  const c=gerarConsultaXML();
+  downloadXML('consulta-pendencias_'+c.id+'.xml', c.xml);
+  regXml({ direcao:'enviado', via:'arquivo', xml:c.xml });
+  log('Consulta de pendências '+c.id+' gerada ('+c.alvo+').');
+  save(); closeCons(); renderFin();
+  toast('Consulta '+c.id+' baixada. Envie ao Financeiro.','ok');
+};
+el('#cons-enviar').onclick=async()=>{
+  if(!sockPronto()){ toast('Socket desconectado. Conecte na aba Socket.','erro'); return; }
+  const c=gerarConsultaXML();
+  save(); closeCons(); renderFin();
+  if(await sockEnviarArquivo(c.xml, 'consulta-pendencias_'+c.id+'.xml', destFin(), 'consulta '+c.id+' ('+c.alvo+')'))
+    toast('Consulta '+c.id+' enviada. A resposta entra sozinha quando o Financeiro responder.','ok');
+};
+const kids = (pai,nome) => pai ? [...pai.children].filter(c=>c.localName===nome && c.namespaceURI===NS_PEND) : [];
+const kid = (pai,nome) => kids(pai,nome)[0] || null;
+const texto = n => n ? n.textContent.trim() : '';
+function parseRespostaPendencias(text){
+  const doc=new DOMParser().parseFromString(text.replace(/^\uFEFF/,''),'application/xml');
+  if(doc.getElementsByTagName('parsererror').length) throw new Error('XML mal formado.');
+  const root=doc.documentElement;
+  if(root.localName!=='respostaPendencias' || root.namespaceURI!==NS_PEND) throw new Error('O arquivo não é uma respostaPendencias ('+NS_PEND+').');
+  if(root.getAttribute('versao')!=='1.0') throw new Error('Versão não suportada: '+(root.getAttribute('versao')||'(vazia)')+'.');
+  const id=root.getAttribute('id')||'';
+  if(!id) throw new Error('Resposta sem id.');
+  const dataConsulta=texto(kid(root,'dataConsulta'));
+  if(!isoOk(dataConsulta)) throw new Error('dataConsulta ausente ou inválida.');
+  const erro=kid(root,'erro');
+  if(erro) return {id, dataConsulta, erro:texto(erro), itens:[], avisos:[]};
+  const pend=kid(root,'pendencias');
+  if(!pend) throw new Error('Resposta sem <pendencias>.');
+  const avisos=[];
+  const itens=kids(pend,'pendencia').map((n,i)=>{
+    const fn=kid(n,'fornecedor');
+    const it={ referencia:n.getAttribute('referencia')||'', fornecedor:texto(fn), documento:fn ? (fn.getAttribute('documento')||'') : '',
+      categoria:texto(kid(n,'categoria')), valor:parseFloat(texto(kid(n,'valor'))), vencimento:texto(kid(n,'vencimento')) };
+    if(!it.fornecedor) avisos.push('pendência '+(i+1)+' sem fornecedor');
+    if(isNaN(it.valor)){ avisos.push('pendência '+(i+1)+' com valor inválido'); it.valor=0; }
+    if(!isoOk(it.vencimento)) avisos.push('pendência '+(i+1)+' com vencimento inválido');
+    return it;
+  });
+  const tot=kid(root,'totalizador');
+  const qtd=parseInt(texto(kid(tot,'qtdPendencias')),10);
+  const valorTotal=parseFloat(texto(kid(tot,'valorTotal')));
+  const somaCent=itens.reduce((s,i)=>s+centavos(i.valor),0);
+  if(!tot) avisos.push('sem totalizador');
+  else{
+    if(qtd!==itens.length) avisos.push('totalizador diz '+qtd+' pendência(s), vieram '+itens.length);
+    if(centavos(valorTotal)!==somaCent) avisos.push('valorTotal ('+dec2(valorTotal)+') difere da soma ('+(somaCent/100).toFixed(2)+')');
+  }
+  return {id, dataConsulta, itens, qtd:itens.length, valorTotal:somaCent/100, avisos};
+}
+el('#btn-fin-resposta').onclick=()=>el('#file-fin').click();
+function aplicarRespostaPendencias(text, via){
+  let res;
+  try{ res=parseRespostaPendencias(text); }
+  catch(err){ log('Resposta de pendências ('+via+') rejeitada: '+err.message); if(via==='arquivo') toast(err.message,'erro'); return false; }
+  const nossa=state.consultas.some(c=>c.id===res.id);
+  if(!nossa){
+    if(via==='socket'){ log('Socket: respostaPendencias '+res.id+' ignorada (não é de uma consulta nossa).'); return false; }
+    res.avisos.unshift('id '+res.id+' não corresponde a nenhuma consulta gerada aqui');
+  }
+  state.pendencias=res;
+  if(res.erro){
+    log('Financeiro respondeu a '+res.id+' com erro ('+via+'): '+res.erro);
+    save(); renderFin(); toast('Financeiro respondeu com erro: '+res.erro,'erro');
+    return true;
+  }
+  let completados=0;
+  res.itens.forEach(it=>{
+    if(!docValido(it.documento)) return;
+    const fo=acharFornecedor(it.fornecedor);
+    if(fo && !docValido(soDigitos(fo.cnpj))){ fo.cnpj=it.documento; completados++; }
+  });
+  log('Resposta '+res.id+' recebida ('+via+'): '+res.itens.length+' pendência(s), '+money(res.valorTotal)+'.'+
+      (completados?' CPF/CNPJ completado em '+completados+' fornecedor(es).':'')+
+      (res.avisos.length?' Avisos: '+res.avisos.join('; ')+'.':''));
+  save(); renderFin(); renderForn();
+  toast((via==='socket'?'Financeiro respondeu: ':'')+res.itens.length+' pendência(s) carregada(s)'+(res.avisos.length?' (com avisos, veja os Logs).':'.'), res.avisos.length?'info':'ok');
+  return true;
+}
+el('#file-fin').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ e.target.value=''; (/avisoPagamento/.test(r.result) ? aplicarAvisoPagamento : aplicarRespostaPendencias)(r.result, 'arquivo'); };
+  r.readAsText(f,'utf-8');
+};
+function renderFin(){
+  const tb=el('#tb-fin'); if(!tb) return;
+  const c=state.config||{}, pr=state.pendencias;
+  const partes=[];
+  partes.push(c.empresa
+    ? 'Empresa <strong>'+esc(c.empresa)+'</strong> ('+esc(fmtDoc(c.cnpj))+'), usuário '+esc(c.usuario)+'.'
+    : '<strong>Dados da empresa não preenchidos.</strong> Eles vão no cabeçalho do XML de saída.');
+  if(state.consultas && state.consultas.length) partes.push('Última consulta: <strong>'+esc(state.consultas[0].id)+'</strong>.');
+  if(pr){
+    partes.push('Resposta <strong>'+esc(pr.id)+'</strong> de '+fmtData(pr.dataConsulta)+
+      (pr.erro ? ', com erro: '+esc(pr.erro)+'.' : ': '+pr.itens.length+' pendência(s), total <strong>'+money(pr.valorTotal)+'</strong>.'));
+    if(pr.avisos && pr.avisos.length) partes.push('Avisos: '+esc(pr.avisos.join('; '))+'.');
+  }
+  const nota=el('#fin-resumo');
+  nota.innerHTML=partes.join(' ');
+  nota.classList.toggle('warn', !c.empresa || !!(pr && (pr.erro || (pr.avisos&&pr.avisos.length))));
+  const itens = pr && !pr.erro ? pr.itens : [];
+  el('#empty-fin').hidden = itens.length>0;
+  tb.innerHTML = itens.map(p=>{
+    const vencida = isoOk(p.vencimento) && p.vencimento < pr.dataConsulta;
+    return `<tr>
+      <td><span class="code">${esc(p.referencia)||'—'}</span></td>
+      <td>${esc(p.fornecedor)}</td>
+      <td class="dim">${p.documento?esc(fmtDoc(p.documento)):'—'}</td>
+      <td>${esc(p.categoria)||'—'}</td>
+      <td class="r">${money(p.valor)}</td>
+      <td>${esc(fmtData(p.vencimento))}</td>
+      <td><span class="badge ${vencida?'b-red':'b-blue'}">${vencida?'Vencida':'A vencer'}</span></td>
+    </tr>`;
+  }).join('');
+}
+// ================= SOCKET — via ponte local (ponte-socket.js) ===============
+const sock={ es:null, http:false, tcp:false, alvo:'', linhas:[] };
+const sockBase = () => ((state.socket && state.socket.url) || 'http://localhost:8787').replace(/\/+$/,'');
+const sockPronto = () => sock.http && sock.tcp;
+function sockLinha(dir, t){
+  sock.linhas.unshift({ ts:new Date().toLocaleTimeString('pt-BR'), dir, texto:t });
+  sock.linhas=sock.linhas.slice(0,300);
+  renderSock();
+}
+function sockConectar(){
+  sockDesconectar(true);
+  state.socket=Object.assign(state.socket||{}, { url:(el('#sock-url').value.trim()||'http://localhost:8787') }); save();
+  try{ sock.es=new EventSource(sockBase()+'/eventos'); }
+  catch(e){ toast('Endereço da ponte inválido.','erro'); return; }
+  sockLinha('sys','Conectando na ponte '+sockBase()+'…');
+  sock.es.onopen=()=>{
+    sock.http=true; renderSockStatus();
+    fetch(sockBase()+'/status').then(r=>r.json()).then(j=>{
+      sock.arquivos=!!j.arquivos; sock.versao=j.versao||(j.arquivos?2:1);
+      el('#sock-ponte-ver').textContent = sock.versao>=7 ? 'Ponte v7'+(j.nome?' · conectado como '+j.nome:'') : 'Ponte antiga: atualize a ponte-socket.js';
+      if(sock.versao<7) toast('A ponte-socket.js está desatualizada: troque pela v7.','erro');
+      else if(j.nomeDesejado && j.nome && j.nome!==j.nomeDesejado) toast('Conectado como '+j.nome+': o nome '+j.nomeDesejado+' está ocupado por uma conexão antiga. Envios e consultas funcionam normalmente; a ponte recupera o nome sozinha.','info');
+      renderDiretorio(j.diretorio||[]);
+    }).catch(()=>{});
+  };
+  sock.es.onerror=()=>{
+    if(sock.http) sockLinha('sys','Ponte fora do ar. Tentando de novo…');
+    sock.http=false; sock.tcp=false; renderSockStatus();
+  };
+  sock.es.addEventListener('status', e=>{
+    const d=JSON.parse(e.data);
+    sock.http=true; sock.tcp=!!d.conectado; sock.alvo=d.host+':'+d.port;
+    if(d.msg) sockLinha('sys', d.msg);
+
+    renderSockStatus();
+  });
+  sock.es.addEventListener('diretorio', e=>renderDiretorio(JSON.parse(e.data)));
+  sock.es.addEventListener('arquivo', e=>{
+    const a=JSON.parse(e.data);
+    sockLinha('in', '[arquivo '+a.nome+' de '+a.de+', '+a.bytes+' bytes] '+String(a.conteudo||'').replace(/\s+/g,' ').slice(0,300));
+    sockReceberArquivo(a);
+  });
+  sock.es.addEventListener('linha', e=>{
+    const t=JSON.parse(e.data);
+    sockLinha('in', t);
+    sockReceber(t);
+  });
+}
+function sockDesconectar(silencioso){
+  if(sock.es){ sock.es.close(); sock.es=null; if(!silencioso) sockLinha('sys','Desconectado da ponte.'); }
+  sock.http=false; sock.tcp=false; renderSockStatus();
+}
+async function sockEnviar(t, rotulo){
+  const linha=String(t==null?'':t).replace(/\r?\n/g,' ').trim();
+  if(!linha) return false;
+  if(!sockPronto()){ toast('Socket desconectado. Conecte na aba Socket.','erro'); return false; }
+  try{
+    const r=await fetch(sockBase()+'/enviar',{ method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:linha });
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok || !j.ok) throw new Error(j.erro || ('HTTP '+r.status));
+    sockLinha('out', linha);
+    log('Socket: enviado '+(rotulo||'mensagem')+'.');
+    if(linha.charAt(0)==='<') regXml({ direcao:'enviado', via:'socket', xml:linha });
+    return true;
+  }catch(e){
+    toast('Falha ao enviar pelo socket: '+e.message,'erro');
+    log('Socket: falha ao enviar '+(rotulo||'mensagem')+' — '+e.message);
+    return false;
+  }
+}
+// Envia um XML como ARQUIVO pelo servidor da turma (pedaços + pedaço de tamanho 0), via ponte.
+// É o formato que o Finanweb e o Estoque esperam: arquivo .xml em privado para o apelido do setor.
+const destino = s => { const v=String(s||'').trim(); return !v ? '' : (v.startsWith('#')?v:'#'+v); };
+const destFin = () => destino(state.socket.destFin) || '#finanweb';
+const destEst = () => destino(state.socket.destEst) || '#sistema-de-estoque';
+async function sockEnviarArquivo(conteudo, nome, para, rotulo, usarId){
+  if(!sockPronto()){ toast('Socket desconectado. Abra a ponte e conecte na aba Socket.','erro'); return false; }
+  const arq = nome.replace(/[^\w.-]+/g,'-');
+  try{
+    const r=await fetch(sockBase()+'/arquivo?para='+encodeURIComponent(para)+'&nome='+encodeURIComponent(arq)+(usarId?'&id=1':''),
+      { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:conteudo });
+    if(r.status===404) throw new Error('a ponte-socket.js está desatualizada, troque pela versão nova (com arquivos)');
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok || !j.ok) throw new Error(j.erro || ('HTTP '+r.status));
+    const real=j.para||para;
+    if(usarId && !/^#\d+$/.test(real)) toast('Enviado para '+real+' pelo nome: o ID atual desse setor ainda não é conhecido. Se não chegar, clique em Atualizar IDs na aba Socket e envie de novo.','info');
+    sockLinha('out', '[arquivo '+arq+' → '+real+(real!==para?' ('+para+')':'')+', '+j.bytes+' bytes]');
+    log('Socket: arquivo '+arq+' enviado para '+real+(real!==para?' ('+para+')':'')+' ('+(rotulo||'XML')+').');
+    regXml({ direcao:'enviado', via:'socket', xml:conteudo });
+    return true;
+  }catch(e){
+    toast('Falha ao enviar o arquivo: '+e.message,'erro');
+    log('Socket: falha ao enviar o arquivo '+arq+' para '+para+' — '+e.message);
+    return false;
+  }
+}
+// arquivo que chegou pelo servidor (a ponte já juntou os pedaços)
+function sockReceberArquivo(a){
+  const t=String(a.conteudo||'');
+  if(/<([\w.-]+:)?respostaPendencias[\s>]/.test(t)){ aplicarRespostaPendencias(t, 'socket'); return; }
+  if(/<([\w.-]+:)?avisoPagamento[\s>]/.test(t)){ aplicarAvisoPagamento(t, 'socket'); return; }
+  if(RE_CONF.test(t) || RE_DISP.test(t) || (/<estoque[\s>]/.test(t) && t.indexOf('<produtos')>=0)){ aplicarXmlEstoque(t, 'socket'); return; }
+}
+// o servidor pode prefixar a linha (ex.: nome de quem enviou): o XML é recortado do primeiro "<" ao último ">"
+function sockReceber(t){
+  if(/^\[servidor\]/i.test(t) && /n[aã]o (encontrad|existe|conectad)|inexistente|inv[aá]lid|erro|falh/i.test(t)){
+    log('Socket: aviso do servidor — '+t);
+    toast('Servidor: '+t.replace(/^\[servidor\]\s*/i,'').slice(0,200),'erro');
+  }
+  // resposta em texto dos setores (ex.: Finanweb dizendo se o arquivo foi aceito ou recusado)
+  if(t.charAt(0)!=='<' && /finanweb|sistema-de-estoque/i.test(t) && /aceit|recus|inv[aá]lid|erro|process/i.test(t)){
+    const de=/finanweb/i.test(t)?'Financeiro':'Estoque';
+    log('Socket: '+de+' respondeu — '+t);
+    toast(de+': '+t.replace(/^.*?:\s*/,'').slice(0,180), /recus|inv[aá]lid|erro/i.test(t)?'erro':'ok');
+  }
+  const ini=t.indexOf('<'), fim=t.lastIndexOf('>');
+  const xml = (ini>=0 && fim>ini) ? t.slice(ini,fim+1) : '';
+  if(!xml) return;
+  if(t.indexOf('respostaPendencias')>=0){ aplicarRespostaPendencias(xml, 'socket'); return; }
+  if(RE_CONF.test(xml) || RE_DISP.test(xml)){ aplicarXmlEstoque(xml, 'socket'); return; }
+  if(/<estoque[\s>]/.test(xml) && xml.indexOf('<produtos')>=0){ aplicarXmlEstoque(xml, 'socket'); }
+}
+function renderSockStatus(){
+  const ok=sockPronto();
+  const txt = ok ? 'Conectado · '+sock.alvo : (sock.http ? 'Ponte ok, servidor TCP offline' : 'Desconectado');
+  const cls = ok ? 'b-green' : (sock.http ? 'b-amber' : 'b-slate');
+  ['#sock-status','#sock-pill'].forEach(s=>{ const b=el(s); if(b){ b.textContent=(s==='#sock-pill'?'Socket: ':'')+txt; b.className='badge '+cls; } });
+}
+function renderSock(){
+  const tb=el('#tb-sock'); if(!tb) return;
+  el('#empty-sock').hidden = sock.linhas.length>0;
+  const rot={in:['Recebido','b-blue'], out:['Enviado','b-green'], sys:['Sistema','b-slate']};
+  tb.innerHTML=sock.linhas.map(l=>`
+    <tr>
+      <td class="dim small">${esc(l.ts)}</td>
+      <td><span class="badge ${rot[l.dir][1]}">${rot[l.dir][0]}</span></td>
+      <td><span class="msg" title="${esc(l.texto)}">${esc(l.texto.length>400 ? l.texto.slice(0,400)+'…' : l.texto)}</span></td>
+    </tr>`).join('');
+}
+el('#sock-conectar').onclick=sockConectar;
+el('#sock-desconectar').onclick=()=>sockDesconectar();
+el('#sock-enviar').onclick=async()=>{ if(await sockEnviar(el('#sock-msg').value,'mensagem livre')) el('#sock-msg').value=''; };
+el('#sock-msg').onkeydown=e=>{ if(e.key==='Enter') el('#sock-enviar').click(); };
+el('#sock-limpar').onclick=()=>{ sock.linhas=[]; renderSock(); };
+function renderDiretorio(lista){
+  sock.dir=lista||[];
+  const alvo=[destFin(),destEst()].map(d=>d.replace(/^#/,'').toLowerCase());
+  el('#sock-dir').innerHTML = sock.dir.length
+    ? sock.dir.filter(d=>!/^cliente\d+$/i.test(d.nome)).map(d=>`<span class="chip" style="${alvo.includes(d.nome.toLowerCase())?'border-color:var(--green-tx);color:var(--green-tx)':''}">${esc(d.nome)} → #${esc(d.id)}</span>`).join('')
+    : '<span class="small dim">Nenhum ID conhecido ainda. Clique em Atualizar IDs.</span>';
+}
+el('#sock-lista').onclick=async()=>{
+  if(!sockPronto()){ toast('Socket desconectado.','erro'); return; }
+  try{ await fetch(sockBase()+'/lista',{method:'POST'}); toast('Pedi a lista ao servidor. Os IDs aparecem em instantes.'); }
+  catch(e){ toast('A ponte não respondeu.','erro'); }
+};
+el('#sock-dest-salvar').onclick=()=>{
+  const f=destino(el('#sock-dest-fin').value), e=destino(el('#sock-dest-est').value);
+  if(!f || !e || /\s/.test(f+e)){ toast('Informe os dois destinos, sem espaços (ex.: #finanweb).','erro'); return; }
+  state.socket.destFin=f; state.socket.destEst=e; save();
+  el('#sock-dest-fin').value=f; el('#sock-dest-est').value=e;
+  log('Socket: destinos salvos — Financeiro '+f+', Estoque '+e+'.');
+  toast('Destinos salvos.','ok');
+};
+
+// ================= ESTOQUE ===================================================
+// Usa estoque-xml.js (window.EstoqueXML): XML v2 do Estoque e contrato compras-estoque v1.
+const EX = window.EstoqueXML || null;
+function est(){
+  if(!state.estoque) state.estoque={};
+  const s=state.estoque;
+  s.apiUrl = s.apiUrl || '';
+  s.saldo = s.saldo || null;
+  s.entradas = s.entradas || [];
+  s.seq = s.seq || 0;
+  s.consultas = s.consultas || [];
+  s.consultaSeq = s.consultaSeq || 0;
+  return s;
+}
+let estAba='saldo';
+const fes = { q:'', sit:'' }, fee = { filtro:'' };
+const selSaldo = new Set();
+const numPedido = num => String(num||'').replace(/^PC-/i,'');
+function skuEstoque(sku, nome){
+  if(!EX) return String(sku||'').trim();
+  const s = EX.normalizarSku(sku) || EX.normalizarSku(nome);
+  return s.slice(0,40).replace(/-+$/,'');
+}
+function exigeModulo(){
+  if(EX) return true;
+  toast('O arquivo estoque-xml.js não carregou. Coloque-o na mesma pasta do index.html.','erro');
+  return false;
+}
+function docFornecedor(nome){
+  const f=acharFornecedor(nome); const d=soDigitos(f && f.cnpj);
+  return docValido(d) ? d : undefined;
+}
+// chamada a cada baixa em Recebimentos
+function registraEntradaEstoque(p, it, delta, restanteAntes){
+  const s=est(); s.seq++;
+  const id = numPedido(p.num)+'-'+s.seq;
+  s.entradas.unshift({ id, externalId:'REC-'+id, pedido:p.num, recebidoEm:new Date().toISOString(), fornecedor:p.fornecedor,
+    sku:skuEstoque(it.sku, it.nome), nome:it.nome, quantidade:delta, quantidadePedida:restanteAntes, preco:it.preco,
+    tipo:p.recebido?'TOTAL':'PARCIAL', enviado:null, statusEstoque:null, divergencias:[], mensagemEstoque:'' });
+}
+function situacaoSaldo(p){
+  if(p.quantidade<=0) return 'falta';
+  if(p.quantidade<=p.estoqueMinimo) return 'baixo';
+  return 'ok';
+}
+const SIT = { falta:['Sem saldo','b-red'], baixo:['No mínimo ou abaixo','b-amber'], ok:['Normal','b-green'] };
+const pedidosAbertos = () => state.pedidos.filter(p=>p.log!=='Recebido' && !p.recebido);
+
+function renderEstoque(){
+  if(!el('#v-estoque')) return;
+  const s=est();
+  const prods = s.saldo ? s.saldo.produtos : [];
+  const baixos = prods.filter(p=>situacaoSaldo(p)!=='ok').length;
+  const abertos = pedidosAbertos();
+  const atras = abertos.filter(atrasado).length;
+  const pend = s.entradas.filter(x=>!x.enviado).length;
+  const diverg = s.entradas.filter(x=>x.statusEstoque==='DIVERGENTE'||x.statusEstoque==='REJEITADO').length;
+  kpis('#kpi-estoque', [
+    {v:s.saldo?prods.length:'—', t:'produtos no saldo'},
+    {v:s.saldo?baixos:'—', t:'no mínimo ou abaixo', cls:baixos?'warn':''},
+    {v:abertos.length, t:'entregas previstas'+(atras?' ('+atras+' atrasada'+(atras>1?'s':'')+')':''), cls:atras?'bad':''},
+    {v:pend, t:'entradas a enviar', cls:pend?'warn':''},
+    {v:diverg, t:'divergências do Estoque', cls:diverg?'bad':''}
+  ]);
+  el('#est-c-saldo').textContent = s.saldo ? prods.length : '';
+  el('#est-c-prev').textContent = abertos.length || '';
+  el('#est-c-ent').textContent = s.entradas.length || '';
+  els('#est-tabs button').forEach(b=>b.classList.toggle('on', b.dataset.aba===estAba));
+  ['saldo','previsoes','entradas','consultas','historico'].forEach(a=> el('#est-p-'+a).hidden = a!==estAba);
+  el('#est-c-cons').textContent = s.consultas.length || '';
+  el('#est-c-hist').textContent = (state.xmlHist||[]).length || '';
+  renderSaldo(); renderPrevisoes(); renderEntradas(); renderConsultas(); renderHistorico();
+}
+els('#est-tabs button').forEach(b=> b.onclick=()=>{ estAba=b.dataset.aba; renderEstoque(); });
+
+function renderSaldo(){
+  const s=est();
+  const meta=el('#es-meta');
+  if(!s.saldo){
+    meta.hidden=true; el('#tb-saldo').innerHTML='';
+    el('#empty-saldo').hidden=false;
+    el('#empty-saldo-t').textContent='Saldo do Estoque ainda não carregado';
+    el('#empty-saldo-p').textContent='Importe o XML gerado pelo Estoque, busque pela API ou aguarde o envio pelo socket.';
+    el('#es-cta-importar').hidden=false;
+    atualizaSel(); return;
+  }
+  const via={arquivo:'arquivo importado',socket:'socket',api:'API do Estoque'}[s.saldo.via]||s.saldo.via;
+  meta.hidden=false;
+  meta.innerHTML='Saldo gerado pelo Estoque em <strong>'+esc(fmtDataHora(s.saldo.geradoEm))+'</strong>, recebido via '+esc(via)+' em '+esc(fmtDataHora(s.saldo.recebidoEm))+'.';
+  const q=canonKey(fes.q);
+  const lista=s.saldo.produtos.filter(p=>(!fes.sit || situacaoSaldo(p)===fes.sit) && contem(q, p.sku, p.nome))
+    .sort((a,b)=>{ const o={falta:0,baixo:1,ok:2}; return (o[situacaoSaldo(a)]-o[situacaoSaldo(b)]) || a.nome.localeCompare(b.nome); });
+  el('#empty-saldo').hidden = lista.length>0;
+  if(!lista.length){
+    el('#empty-saldo-t').textContent='Nenhum produto com esses filtros';
+    el('#empty-saldo-p').textContent='Limpe a busca ou troque a situação.';
+    el('#es-cta-importar').hidden=true;
+  }
+  el('#tb-saldo').innerHTML = lista.map(p=>{
+    const sit=SIT[situacaoSaldo(p)];
+    return `<tr>
+      <td><input type="checkbox" data-sel="${esc(p.sku)}" ${selSaldo.has(p.sku)?'checked':''} aria-label="Selecionar ${esc(p.nome)}"></td>
+      <td><span class="code">${esc(p.sku)}</span></td>
+      <td>${esc(p.nome)}${p.descricao?'<div class="small dim">'+esc(p.descricao)+'</div>':''}</td>
+      <td class="r"><strong>${p.quantidade}</strong></td>
+      <td class="r dim">${p.estoqueMinimo}</td>
+      <td class="r">${money(p.preco)}</td>
+      <td><span class="badge ${sit[1]}">${sit[0]}</span></td>
+      <td class="dim">${p.finalidade==='USO_INTERNO'?'Uso interno':'Venda'}</td>
+    </tr>`;
+  }).join('');
+  atualizaSel();
+}
+function atualizaSel(){
+  const n=selSaldo.size;
+  const b=el('#es-pedir');
+  b.disabled=!n;
+  b.textContent = n ? 'Criar pedido com '+n+' item(ns)' : 'Criar pedido';
+  const vis=els('#tb-saldo [data-sel]');
+  el('#es-all').checked = vis.length>0 && vis.every(c=>c.checked);
+}
+el('#es-q').oninput=e=>{ fes.q=e.target.value; renderSaldo(); };
+el('#es-sit').onchange=e=>{ fes.sit=e.target.value; renderSaldo(); };
+el('#tb-saldo').onchange=e=>{
+  const c=e.target.closest('[data-sel]'); if(!c) return;
+  if(c.checked) selSaldo.add(c.dataset.sel); else selSaldo.delete(c.dataset.sel);
+  atualizaSel();
+};
+el('#es-all').onchange=e=>{
+  els('#tb-saldo [data-sel]').forEach(c=>{ c.checked=e.target.checked; if(c.checked) selSaldo.add(c.dataset.sel); else selSaldo.delete(c.dataset.sel); });
+  atualizaSel();
+};
+el('#es-sel-baixo').onclick=()=>{
+  const s=est(); if(!s.saldo){ toast('Carregue o saldo do Estoque primeiro.','erro'); return; }
+  selSaldo.clear();
+  s.saldo.produtos.filter(p=>situacaoSaldo(p)!=='ok').forEach(p=>selSaldo.add(p.sku));
+  renderSaldo();
+  toast(selSaldo.size ? selSaldo.size+' produto(s) no mínimo ou abaixo selecionado(s).' : 'Nenhum produto no mínimo ou abaixo.');
+};
+// quantidade sugerida: repõe até 2x o mínimo (ou 1 se não houver mínimo)
+el('#es-pedir').onclick=()=>{
+  const s=est(); if(!s.saldo || !selSaldo.size) return;
+  const itens=s.saldo.produtos.filter(p=>selSaldo.has(p.sku)).map(p=>({
+    sku:p.sku, nome:p.nome, preco:Number(p.preco)||0,
+    qtd: p.estoqueMinimo>0 ? Math.max(1, p.estoqueMinimo*2 - p.quantidade) : 1
+  }));
+  selSaldo.clear(); renderSaldo();
+  openModal(null, { itens });
+  toast('Revise as quantidades, escolha o fornecedor e salve o pedido.');
+};
+el('#es-cta-importar').onclick=()=>el('#est-importar').click();
+
+function renderPrevisoes(){
+  const lista=pedidosAbertos().sort((a,b)=>(a.previsao||'9999').localeCompare(b.previsao||'9999'));
+  el('#empty-prev').hidden = lista.length>0;
+  el('#tb-prev').innerHTML = lista.map(p=>{
+    const falta=p.itens.reduce((s,i)=>s+Math.max(0,i.qtd-(i.receb||0)),0);
+    return `<tr>
+      <td><span class="code">${esc(p.num)}</span></td>
+      <td>${esc(p.fornecedor)||'<span class="faint">—</span>'}</td>
+      <td class="r">${falta} <span class="small dim">em ${p.itens.filter(i=>(i.receb||0)<i.qtd).length} produto(s)</span></td>
+      <td>${entregaInfo(p)}</td>
+      <td><span class="badge ${logBadge(p.log)}">${esc(p.log)}</span></td>
+      <td><div class="acts"><button class="act" data-edit-prev="${p.id}">Alterar previsão</button></div></td>
+    </tr>`;
+  }).join('');
+}
+el('#tb-prev').onclick=e=>{
+  const b=e.target.closest('[data-edit-prev]'); if(!b) return;
+  openModal(state.pedidos.find(p=>p.id===b.dataset.editPrev));
+  setTimeout(()=>el('#f-prev').focus(),40);
+};
+
+const STATUS_EST = { ACEITO:['Aceito','b-green'], DIVERGENTE:['Divergente','b-amber'], REJEITADO:['Rejeitado','b-red'], DUPLICADO:['Duplicado','b-slate'] };
+function renderEntradas(){
+  const s=est();
+  const lista=s.entradas.filter(x=>{
+    if(fee.filtro==='pendente') return !x.enviado;
+    if(fee.filtro==='enviada') return !!x.enviado;
+    if(fee.filtro==='divergente') return x.statusEstoque==='DIVERGENTE'||x.statusEstoque==='REJEITADO';
+    return true;
+  });
+  el('#ee-meta').textContent = s.entradas.length ? lista.length+' entrada(s)' : '';
+  el('#empty-ent').hidden = lista.length>0;
+  el('#tb-ent').innerHTML = lista.map(x=>{
+    const env = x.enviado
+      ? `<span class="badge ${x.enviado.destino==='arquivo'?'b-slate':'b-blue'}">${x.enviado.destino==='arquivo'?'Arquivo gerado':'Enviada'}</span><div class="small dim">${esc(x.enviado.formato==='v1'?'recebimento-v1':'estoque v2')}${x.enviado.destino!=='arquivo'?' por '+esc(x.enviado.destino==='api'?'API':'socket'):''}</div>`
+      : '<span class="badge b-amber">Não enviada</span>';
+    let ret='<span class="faint small">Aguardando</span>';
+    if(x.statusEstoque){
+      const st=STATUS_EST[x.statusEstoque]||[x.statusEstoque,'b-slate'];
+      ret=`<span class="badge ${st[1]}">${st[0]}</span>`;
+      if(x.divergencias && x.divergencias.length) ret+=x.divergencias.map(d=>`<div class="small dim">${esc(d.sku)}: informado ${d.quantidadeInformada}, contado ${d.quantidadeContada}</div>`).join('');
+      if(x.mensagemEstoque) ret+=`<div class="small dim">${esc(x.mensagemEstoque)}</div>`;
+    }
+    return `<tr>
+      <td class="dim small">${esc(fmtDataHora(x.recebidoEm))}</td>
+      <td><span class="code">${esc(x.pedido)}</span></td>
+      <td><span class="code">${esc(x.sku)}</span></td>
+      <td>${esc(x.nome)}</td>
+      <td class="r">${x.quantidade}</td>
+      <td><span class="badge ${x.tipo==='TOTAL'?'b-green':'b-amber'}">${x.tipo==='TOTAL'?'Total':'Parcial'}</span></td>
+      <td>${env}</td>
+      <td>${ret}</td>
+    </tr>`;
+  }).join('');
+}
+el('#ee-filtro').onchange=e=>{ fee.filtro=e.target.value; renderEntradas(); };
+
+// ---------- montagem dos XMLs ----------
+// os contratos do Compras usam o mesmo cabeçalho do Finanweb: empresa, cnpj, origem, dataArquivo, usuario
+function cabecalhoEmpresa(){
+  const c=state.config||{};
+  return { empresa:{ razaoSocial:c.empresa, cnpj:c.cnpj }, usuario:c.usuario, origem:ORIGEM };
+}
+function empresaOk(){
+  const c=state.config||{};
+  if(c.empresa && /^\d{14}$/.test(c.cnpj||'') && c.usuario) return true;
+  toast('Preencha os dados da empresa: eles vão no cabeçalho do XML.','erro');
+  el('#overlay-envio').classList.remove('on'); openCfg();
+  return false;
+}
+function xmlEntradas(lista, formato){
+  if(formato==='v2'){
+    const lote=EX.loteDeRecebimentos(lista.map(x=>({ id:x.id, recebidoEm:x.recebidoEm, itens:[{sku:x.sku, nome:x.nome, quantidade:x.quantidade}] })));
+    return EX.gerarXml(lote);
+  }
+  return EX.gerarRecebimentos({ ...cabecalhoEmpresa(), recebimentos: lista.map(x=>({
+    referencia:x.externalId, pedido:x.pedido, status:x.tipo, dataRecebimento:x.recebidoEm,
+    fornecedor:{ nome:x.fornecedor||'Sem fornecedor', documento:docFornecedor(x.fornecedor) },
+    itens:[{ sku:x.sku, produto:x.nome, quantidade:x.quantidade,
+      quantidadePedida: x.quantidadePedida>=x.quantidade ? x.quantidadePedida : undefined,
+      custoUnitario: Number(x.preco)>0 ? Number(x.preco).toFixed(2) : undefined }]
+  })) }).xml;
+}
+function xmlPrevisoes(){
+  const hoje=hojeISO();
+  const lista=pedidosAbertos().map(p=>{
+    const itens=p.itens.filter(i=>(i.receb||0)<i.qtd).map(i=>({ sku:skuEstoque(i.sku,i.nome), produto:i.nome, quantidade:i.qtd-(i.receb||0) }));
+    if(!itens.length) return null;
+    const prev = isoOk(p.previsao) ? p.previsao : somaDias(p.emissao||hoje, 7);
+    const situacao = prev < hoje ? 'ATRASADA' : (p.log==='Aguardando' ? 'AGUARDANDO' : 'EM_TRANSITO');
+    return { referencia:p.num, status:situacao, dataPedido:isoOk(p.emissao)?p.emissao:undefined, dataPrevista:prev,
+      fornecedor:{ nome:p.fornecedor||'Sem fornecedor', documento:docFornecedor(p.fornecedor) }, itens };
+  }).filter(Boolean);
+  if(!lista.length) return null;
+  return { qtd:lista.length, xml:EX.gerarPrevisoes({ ...cabecalhoEmpresa(), previsoes:lista }).xml };
+}
+
+// ---------- modal de envio ----------
+let envioTipo='entradas';
+function abrirEnvio(tipo){
+  if(!exigeModulo()) return;
+  envioTipo=tipo;
+  const ent = tipo==='entradas';
+  el('#env-title').textContent = ent ? 'Enviar entradas ao Estoque' : 'Enviar previsões de entrega';
+  el('#env-f-escopo').hidden = !ent;
+  el('#env-f-formato').hidden = !ent;
+  if(!ent){ el('#env-formato').value='v1'; el('#env-destino').value='socket'; }
+  else { el('#env-formato').value='v2'; el('#env-destino').value='api'; }
+  atualizaEnvio();
+  abrir('#overlay-envio', ent ? '#env-escopo' : '#env-destino');
+}
+function atualizaEnvio(){
+  const s=est(), ent=envioTipo==='entradas', fmt=ent?el('#env-formato').value:'v1';
+  const optApi=el('#env-destino').querySelector('[value=api]');
+  optApi.disabled = fmt!=='v2';
+  if(optApi.disabled && el('#env-destino').value==='api') el('#env-destino').value='arquivo';
+  let h='';
+  if(ent){
+    const n = el('#env-escopo').value==='todas' ? s.entradas.length : s.entradas.filter(x=>!x.enviado).length;
+    h = n ? n+' entrada(s) serão incluídas. ' : 'Nenhuma entrada nesse filtro. ';
+    h += fmt==='v2' ? 'O XML v2 leva só SKU e quantidade, como compra, e o Estoque ignora reenvios do mesmo recebimento.'
+                    : 'O recebimento-v1 segue o padrão dos contratos do Finanweb e leva fornecedor, status total ou parcial, quantidade pedida e custo. Envio pela API só existe no XML v2.';
+  }else{
+    const n=pedidosAbertos().length;
+    h = n ? n+' pedido(s) em aberto vão no previsao-entrega-v1, com a data prevista e os itens que faltam chegar.' : 'Nenhum pedido em aberto.';
+  }
+  if(el('#env-destino').value==='socket' && !sockPronto()) h+=' O socket está desconectado: conecte na aba Socket antes.';
+  if(el('#env-destino').value==='api') h+=' A API grava direto no saldo do Estoque ('+(s.apiUrl||API_ESTOQUE_PADRAO)+')'+(sock.versao>=3?', passando pela ponte.':'. Abra a ponte nova para evitar bloqueio de CORS.');
+  if(el('#env-destino').value==='socket') h+=' Pelo socket, a entrada só vai para o saldo se o Estoque processar arquivos recebidos do Compras.';
+  el('#env-hint').textContent=h;
+}
+['#env-escopo','#env-formato','#env-destino'].forEach(s=> el(s).onchange=atualizaEnvio);
+el('#est-enviar').onclick=()=>abrirEnvio('entradas');
+el('#est-prev-enviar').onclick=()=>abrirEnvio('previsoes');
+el('#env-confirmar').onclick=async()=>{
+  const s=est(), dst=el('#env-destino').value;
+  let xml, lista=[], formato='v1', rotulo, nomeArq;
+  if((envioTipo!=='entradas' || el('#env-formato').value==='v1') && !empresaOk()) return;
+  try{
+    if(envioTipo==='entradas'){
+      formato=el('#env-formato').value;
+      lista = el('#env-escopo').value==='todas' ? s.entradas.slice() : s.entradas.filter(x=>!x.enviado);
+      if(!lista.length){ toast('Nenhuma entrada para enviar. Dê baixa em Recebimentos primeiro.','erro'); return; }
+      lista.reverse();
+      xml=xmlEntradas(lista, formato);
+      rotulo=lista.length+' entrada(s) ('+(formato==='v2'?'estoque v2':'recebimento-v1')+')';
+      nomeArq=(formato==='v2'?'estoque-entradas-v2_':'recebimento-v1_')+hojeISO()+'.xml';
+    }else{
+      const r=xmlPrevisoes();
+      if(!r){ toast('Nenhum pedido em aberto para enviar.','erro'); return; }
+      xml=r.xml; rotulo=r.qtd+' previsão(ões) de entrega'; nomeArq='previsao-entrega-v1_'+hojeISO()+'.xml';
+    }
+  }catch(err){
+    const primeiro=(err.erros&&err.erros[0])||err.message;
+    log('Estoque: XML não gerado — '+err.message.replace(/\n/g,' '));
+    toast('O XML não passou na validação: '+primeiro+'. Detalhes nos Logs.','erro');
+    return;
+  }
+  let ok=false;
+  if(dst==='arquivo'){ downloadXML(nomeArq, xml); ok=true; log('Estoque: XML baixado — '+rotulo+'.'); regXml({ direcao:'enviado', via:'arquivo', xml }); }
+  else if(dst==='socket'){ ok=await sockEnviarArquivo(xml, nomeArq, destEst(), rotulo, true); }
+  else if(dst==='api'){
+    const b=el('#env-confirmar'); b.disabled=true;
+    try{
+      const resp=await enviarApiEstoque(xml); ok=true;
+      log('Estoque: '+rotulo+' importado pela API — '+resp);
+      regXml({ direcao:'enviado', via:'api', xml });
+      const em=new Date().toISOString();
+      lista.forEach(x=>Object.assign(x,{ statusEstoque:'ACEITO', confirmadoEm:em, divergencias:[], mensagemEstoque:'Entrada registrada no saldo pela API do Estoque.' }));
+    }catch(err){
+      log('Estoque: falha na API — '+err.message);
+      toast((/recusou/.test(err.message)?err.message:'Não consegui falar com a API do Estoque: '+err.message+'. Confira se a ponte está aberta.').slice(0,240),'erro');
+    }finally{ b.disabled=false; }
+  }
+  if(!ok) return;
+  if(envioTipo==='entradas'){
+    const em=new Date().toISOString();
+    lista.forEach(x=>{ if(!x.enviado || dst!=='arquivo') x.enviado={em, formato, destino:dst}; });
+  }
+  save(); el('#overlay-envio').classList.remove('on'); renderEstoque();
+  toast(dst==='arquivo' ? 'Arquivo baixado: '+rotulo+'.' : rotulo+' enviada(s) ao Estoque.','ok');
+};
+
+// ---------- disponibilidade (consultaDisponibilidade / respostaDisponibilidade) ----------
+function produtosConhecidos(){
+  const m=new Map();
+  const s=est();
+  (s.saldo?s.saldo.produtos:[]).forEach(p=>m.set(p.sku,{sku:p.sku,nome:p.nome,preco:p.preco}));
+  state.pedidos.forEach(p=>p.itens.forEach(i=>{ const k=skuEstoque(i.sku,i.nome); if(k && !m.has(k)) m.set(k,{sku:k,nome:i.nome,preco:i.preco}); }));
+  return m;
+}
+function renderConsultas(){
+  const s=est();
+  el('#dl-skus').innerHTML=[...produtosConhecidos().values()].map(p=>`<option value="${esc(p.sku)}">${esc(p.nome)}</option>`).join('');
+  const pend=s.consultas.filter(c=>!c.resposta).length;
+  el('#dc-meta').textContent = s.consultas.length ? s.consultas.length+' consulta(s)'+(pend?', '+pend+' aguardando':'') : '';
+  el('#empty-cons').hidden = s.consultas.length>0;
+  const conhecidos=produtosConhecidos();
+  el('#tb-cons').innerHTML = s.consultas.map(c=>{
+    let sit='<span class="badge b-slate">Aguardando resposta</span>', acao='';
+    if(c.resposta && c.resposta.erro) sit=`<span class="badge b-red">Erro</span><div class="small dim">${esc(c.resposta.erro)}</div>`;
+    else if(c.resposta){
+      const q=c.resposta.quantidadeDisponivel;
+      sit = q>0 ? `<span class="badge b-green">${q} disponível(is)</span>` : '<span class="badge b-red">Sem saldo</span>';
+      if(c.resposta.nome) sit+=`<div class="small dim">${esc(c.resposta.nome)}</div>`;
+    }
+    const nome=(c.resposta&&c.resposta.nome) || (conhecidos.get(c.sku)||{}).nome || '';
+    if(!c.resposta || !c.resposta.erro) acao=`<button class="act" data-cons-pedir="${esc(c.id)}">Criar pedido</button>`;
+    return `<tr>
+      <td><span class="code">${esc(c.id)}</span></td>
+      <td><span class="code">${esc(c.sku)}</span>${nome?'<div class="small dim">'+esc(nome)+'</div>':''}</td>
+      <td class="dim small">${esc(fmtDataHora(c.criadaEm))}<div>${c.via==='socket'?'via socket':'arquivo baixado'}</div></td>
+      <td>${sit}</td>
+      <td><div class="acts">${acao}<button class="act muted" data-cons-xml="${esc(c.id)}">XML</button><button class="act red" data-cons-del="${esc(c.id)}">Excluir</button></div></td>
+    </tr>`;
+  }).join('');
+}
+function novaConsulta(via){
+  if(!exigeModulo()) return null;
+  const raw=el('#dc-sku').value.trim();
+  if(!raw){ toast('Informe o código do produto no Estoque.','erro'); el('#dc-sku').focus(); return null; }
+  const s=est();
+  const id='CONS-COMPRAS-'+String(s.consultaSeq+1).padStart(6,'0');
+  let xml;
+  try{ xml=EX.gerarConsultaDisponibilidade(raw, id); }
+  catch(err){ toast('Código inválido: use maiúsculas, dígitos e hífen, como MONITOR-001.','erro'); return null; }
+  s.consultaSeq++;
+  const c={ id, sku:EX.normalizarSku(raw), criadaEm:new Date().toISOString(), via, xml, resposta:null };
+  return c;
+}
+el('#dc-socket').onclick=async()=>{
+  if(!sockPronto()){ toast('Socket desconectado. Conecte na aba Socket ou use Baixar XML da consulta.','erro'); return; }
+  const c=novaConsulta('socket'); if(!c) return;
+  const s=est();
+  if(await sockEnviarArquivo(c.xml, 'consulta-disponibilidade_'+c.id+'.xml', destEst(), 'consulta de disponibilidade '+c.id+' ('+c.sku+')', true)){
+    s.consultas.unshift(c); save(); el('#dc-sku').value=''; renderEstoque();
+    toast('Consulta '+c.id+' enviada. A resposta do Estoque entra sozinha.','ok');
+  }else{ s.consultaSeq--; }
+};
+el('#dc-baixar').onclick=()=>{
+  const c=novaConsulta('arquivo'); if(!c) return;
+  est().consultas.unshift(c);
+  downloadXML('consulta-disponibilidade_'+c.id+'.xml', c.xml);
+  log('Consulta de disponibilidade '+c.id+' gerada ('+c.sku+').');
+  regXml({ direcao:'enviado', via:'arquivo', xml:c.xml });
+  save(); el('#dc-sku').value=''; renderEstoque();
+  toast('Consulta '+c.id+' baixada. Envie ao Estoque e importe a resposta.','ok');
+};
+el('#dc-sku').onkeydown=e=>{ if(e.key==='Enter') (sockPronto()?el('#dc-socket'):el('#dc-baixar')).click(); };
+el('#tb-cons').onclick=e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  const s=est();
+  const c=s.consultas.find(x=>x.id===(b.dataset.consPedir||b.dataset.consXml||b.dataset.consDel)); if(!c) return;
+  if(b.dataset.consXml) downloadXML('consulta-disponibilidade_'+c.id+'.xml', c.xml);
+  if(b.dataset.consDel && confirm('Excluir a consulta '+c.id+'?')){ s.consultas=s.consultas.filter(x=>x!==c); save(); renderEstoque(); }
+  if(b.dataset.consPedir){
+    const p=produtosConhecidos().get(c.sku)||{};
+    openModal(null,{ itens:[{ sku:c.sku, nome:(c.resposta&&c.resposta.nome)||p.nome||c.sku, qtd:1, preco:Number(p.preco)||0 }] });
+  }
+};
+// regras do contrato: resposta idêntica reenviada não muda nada; resposta diferente para a mesma consulta é recusada
+function aplicarRespostaDisponibilidade(t, via){
+  let r;
+  try{ r=EX.lerRespostaDisponibilidade(t); }
+  catch(err){ log('Disponibilidade: resposta rejeitada ('+via+') — '+err.message); if(via!=='socket') toast(err.message,'erro'); return false; }
+  const s=est();
+  const c=s.consultas.find(x=>x.id===r.idConsulta);
+  if(!c){
+    log('Disponibilidade: resposta '+r.idConsulta+' ignorada ('+via+'), não é de uma consulta do Compras.');
+    if(via!=='socket') toast('A resposta '+r.idConsulta+' não corresponde a nenhuma consulta feita aqui.','erro');
+    return false;
+  }
+  if(EX.normalizarSku(r.produtoCodigo)!==c.sku){
+    log('Disponibilidade: resposta '+r.idConsulta+' recusada, produto '+r.produtoCodigo+' diferente do consultado ('+c.sku+').');
+    toast('A resposta de '+c.id+' veio para outro produto ('+r.produtoCodigo+') e foi recusada.','erro');
+    return false;
+  }
+  const nova={ nome:r.nome, quantidadeDisponivel:r.quantidadeDisponivel, erro:r.erro };
+  if(c.resposta){
+    const igual = c.resposta.nome===nova.nome && c.resposta.quantidadeDisponivel===nova.quantidadeDisponivel && c.resposta.erro===nova.erro;
+    if(!igual){
+      log('Disponibilidade: resposta diferente para '+c.id+' recusada ('+via+'). Gere outra consulta para atualizar.');
+      toast('Já havia resposta para '+c.id+'. Para atualizar, faça outra consulta.','erro');
+    }
+    return false;
+  }
+  c.resposta={ ...nova, recebidaEm:new Date().toISOString(), via };
+  log('Disponibilidade: '+c.id+' ('+c.sku+') respondida via '+via+' — '+(r.erro?'erro: '+r.erro:r.quantidadeDisponivel+' disponível(is)')+'.');
+  save(); estAba='consultas'; renderEstoque();
+  toast(r.erro ? 'Estoque respondeu '+c.id+' com erro: '+r.erro : 'Estoque: '+r.quantidadeDisponivel+' unidade(s) de '+(r.nome||c.sku)+' disponível(is).', r.erro?'erro':'ok');
+  return true;
+}
+
+// ---------- API do Estoque (passa pela ponte para não depender de CORS) ----------
+const API_ESTOQUE_PADRAO='https://sistema-de-estoque-cyan.vercel.app';
+async function apiEstoque(caminho, metodo, corpo){
+  const base=(est().apiUrl||API_ESTOQUE_PADRAO).replace(/\/+$/,'');
+  const url=base+caminho;
+  if(sock.http && sock.versao>=3){
+    const r=await fetch(sockBase()+'/proxy?url='+encodeURIComponent(url)+'&metodo='+metodo,
+      { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:corpo||'' });
+    const j=await r.json();
+    if(!j.ok) throw new Error('não consegui falar com o Estoque: '+j.erro);
+    return { status:j.status, corpo:j.corpo, url };
+  }
+  const r=await fetch(url, metodo==='POST' ? { method:'POST', headers:{'Content-Type':'application/xml'}, body:corpo } : { headers:{Accept:'application/xml'} });
+  return { status:r.status, corpo:await r.text(), url };
+}
+const resumoApi = t => { try{ const j=JSON.parse(t); return j.mensagem||j.message||j.erro||j.error||JSON.stringify(j).slice(0,300); }catch(e){ return String(t||'').replace(/\s+/g,' ').slice(0,300); } };
+async function enviarApiEstoque(xml){
+  const v=await apiEstoque('/api/xml/validar','POST',xml);
+  if(v.status>=400) throw Object.assign(new Error('o Estoque recusou na validação ('+v.status+'): '+resumoApi(v.corpo)), { corpo:v.corpo });
+  const i=await apiEstoque('/api/xml','POST',xml);
+  if(i.status>=400) throw Object.assign(new Error('o Estoque recusou a importação ('+i.status+'): '+resumoApi(i.corpo)), { corpo:i.corpo });
+  return resumoApi(i.corpo);
+}
+
+// ---------- entrada automática no saldo ao receber ----------
+let enviandoAuto=false;
+async function enviarEntradasApi(lista, origem){
+  if(!lista.length) return { ok:true, n:0 };
+  if(!exigeModulo()) return { ok:false };
+  let xml;
+  try{ xml=xmlEntradas(lista.slice().reverse(),'v2'); }
+  catch(err){
+    const primeiro=(err.erros&&err.erros[0])||err.message;
+    log('Estoque: entrada não enviada ('+origem+'), XML inválido — '+err.message.replace(/\n/g,' '));
+    toast('A entrada não foi ao Estoque: '+primeiro,'erro');
+    return { ok:false };
+  }
+  try{
+    const resp=await enviarApiEstoque(xml);
+    const em=new Date().toISOString();
+    lista.forEach(x=>Object.assign(x,{ enviado:{em, formato:'v2', destino:'api'}, statusEstoque:'ACEITO', confirmadoEm:em, divergencias:[],
+      mensagemEstoque:'Entrada registrada no saldo pela API do Estoque.' }));
+    log('Estoque: '+lista.length+' entrada(s) registrada(s) no saldo ('+origem+') — '+resp);
+    regXml({ direcao:'enviado', via:'api', xml });
+    save(); renderEstoque();
+    return { ok:true, n:lista.length };
+  }catch(err){
+    log('Estoque: entrada não registrada ('+origem+') — '+err.message);
+    toast(('A entrada ficou pendente: '+err.message).slice(0,240),'erro');
+    return { ok:false };
+  }
+}
+async function atualizarSaldoSilencioso(){
+  try{ const r=await apiEstoque('/api/xml','GET'); if(r.status<400) aplicarXmlEstoque(r.corpo,'api'); }catch(e){}
+}
+async function entradaAutomatica(){
+  if(!el('#fr-auto').checked || enviandoAuto) return;
+  enviandoAuto=true;
+  try{
+    const pend=est().entradas.filter(x=>!x.enviado);
+    const r=await enviarEntradasApi(pend,'ao receber');
+    if(r.ok && r.n){ toast(r.n+' entrada(s) registrada(s) no saldo do Estoque.','ok'); await atualizarSaldoSilencioso(); }
+  }finally{ enviandoAuto=false; }
+}
+el('#fr-auto').checked = est().autoEnviar!==false;
+el('#fr-auto').onchange=e=>{ est().autoEnviar=e.target.checked; save(); };
+el('#fr-enviar').onclick=async()=>{
+  const pend=est().entradas.filter(x=>!x.enviado);
+  if(!pend.length){ toast('Nenhuma entrada pendente: tudo o que foi recebido já está no Estoque.','ok'); return; }
+  const b=el('#fr-enviar'); b.disabled=true;
+  const r=await enviarEntradasApi(pend,'manual');
+  b.disabled=false;
+  if(r.ok){ toast(r.n+' entrada(s) registrada(s) no saldo do Estoque.','ok'); await atualizarSaldoSilencioso(); }
+};
+
+// ---------- importação (arquivo, socket, API) ----------
+const RE_CONF = /<([\w.-]+:)?confirmacaoRecebimento[\s>]/;
+const RE_DISP = /<([\w.-]+:)?respostaDisponibilidade[\s>]/;
+function aplicarXmlEstoque(text, via){
+  if(!EX){ if(via!=='socket') exigeModulo(); return false; }
+  const t=String(text||'').replace(/^\uFEFF/,'');
+  const s=est();
+  if(RE_DISP.test(t)) return aplicarRespostaDisponibilidade(t, via);
+  try{
+    if(RE_CONF.test(t) || /urn:compras:(recebimento|previsao-entrega):1\.0/.test(t)){
+      const msg=EX.lerComprasEstoque(t);
+      if(msg.tipo!=='confirmacao'){
+        if(via!=='socket') toast('Esse XML é um envio do próprio Compras ('+msg.tipo+'), não a confirmação do Estoque.','erro');
+        return false;
+      }
+      if(msg.erro){
+        log('Estoque: confirmação com erro ('+via+') — '+msg.erro);
+        toast('O Estoque não processou o arquivo: '+msg.erro,'erro');
+        return true;
+      }
+      const mud=EX.aplicarConfirmacao(s.entradas, msg).filter(m=>!m.aviso);
+      if(!mud.length){
+        if(via!=='socket') toast('A confirmação não corresponde a nenhuma entrada deste sistema.','erro');
+        log('Estoque: confirmação de '+(msg.dataProcessamento||'')+' ignorada ('+via+'), nenhuma entrada correspondente.');
+        return false;
+      }
+      const prob=mud.filter(m=>m.para==='DIVERGENTE'||m.para==='REJEITADO').length;
+      log('Estoque: confirmação recebida ('+via+') para '+mud.length+' entrada(s)'+(prob?', '+prob+' com divergência ou rejeição':'')+'.');
+      save(); estAba='entradas'; renderEstoque();
+      toast('Estoque confirmou '+mud.length+' entrada(s)'+(prob?'. '+prob+' com divergência ou rejeição.':'.'), prob?'erro':'ok');
+      return true;
+    }
+    if(/<estoque[\s>]/.test(t)){
+      const d=EX.lerXml(t);
+      if(via==='socket' && d.cabecalho.sistemaOrigem && d.cabecalho.sistemaOrigem!=='ESTOQUE') return false;
+      if(!d.produtos.length){ if(via!=='socket') toast('O XML do Estoque não traz produtos, então não há saldo para mostrar.','erro'); return false; }
+      s.saldo={ geradoEm:d.cabecalho.geradoEm, loteId:d.cabecalho.loteId, recebidoEm:new Date().toISOString(), via,
+        produtos:d.produtos.map(p=>({ sku:p.sku, nome:p.nome, descricao:p.descricao, quantidade:p.quantidade||0,
+          estoqueMinimo:p.estoqueMinimo||0, preco:p.preco||0, finalidade:p.finalidade||'VENDA' })) };
+      selSaldo.clear();
+      const baixos=s.saldo.produtos.filter(p=>situacaoSaldo(p)!=='ok').length;
+      log('Estoque: saldo atualizado ('+via+') com '+s.saldo.produtos.length+' produto(s), '+baixos+' no mínimo ou abaixo.');
+      save(); estAba='saldo'; renderEstoque();
+      toast('Saldo atualizado: '+s.saldo.produtos.length+' produto(s), '+baixos+' no mínimo ou abaixo.', 'ok');
+      return true;
+    }
+    throw new Error('O arquivo não é um XML do Estoque: esperado o saldo <estoque>, a <confirmacaoRecebimento> ou a <respostaDisponibilidade>.');
+  }catch(err){
+    log('Estoque: XML rejeitado ('+via+') — '+err.message);
+    if(via!=='socket') toast(err.message,'erro');
+    return false;
+  }
+}
+el('#est-importar').onclick=()=>{ if(exigeModulo()) el('#file-estoque').click(); };
+el('#file-estoque').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ e.target.value=''; aplicarXmlEstoque(r.result,'arquivo'); };
+  r.readAsText(f,'utf-8');
+};
+function abrirConexao(){
+  el('#conn-url').value=est().apiUrl||API_ESTOQUE_PADRAO;
+  abrir('#overlay-conn','#conn-url');
+}
+el('#est-conexao').onclick=abrirConexao;
+el('#conn-salvar').onclick=()=>{
+  const v=el('#conn-url').value.trim().replace(/\/+$/,'');
+  if(v && !/^https?:\/\/[^\s]+$/i.test(v)){ toast('Informe um endereço começando com http:// ou https://','erro'); return; }
+  if(/finanweb/i.test(v)){ toast('Esse é o endereço do Financeiro. Aqui vai a API do Estoque, ex.: '+API_ESTOQUE_PADRAO+'. O Financeiro é só pelo socket.','erro'); return; }
+  if(/\/(contratos|integracoes|api)(\/|$)/i.test(v)){ toast('Use só o endereço base do sistema do Estoque, sem /api ou /contratos. Ex.: '+API_ESTOQUE_PADRAO,'erro'); return; }
+  est().apiUrl=v; save();
+  el('#overlay-conn').classList.remove('on');
+  log('Estoque: endereço da API '+(v?'definido como '+v:'removido')+'.');
+  toast(v?'Endereço da API salvo.':'Endereço da API removido.','ok');
+};
+el('#est-buscar').onclick=async()=>{
+  if(!exigeModulo()) return;
+  toast('Buscando saldo no Estoque…');
+  try{
+    const r=await apiEstoque('/api/xml','GET');
+    if(r.status>=400) throw new Error('o Estoque respondeu '+r.status+': '+resumoApi(r.corpo));
+    aplicarXmlEstoque(r.corpo,'api');
+  }catch(err){
+    log('Estoque: falha ao buscar saldo pela API — '+err.message);
+    toast('Não consegui buscar o saldo: '+err.message,'erro');
+  }
+};
+
+// ================= AVISO DE PAGAMENTO (Financeiro -> Compras) ==================
+// urn:finanweb:aviso-pagamento:1.0 — o Financeiro avisa quando paga ou cancela uma compra enviada no saida-v2.
+const NS_AVISO='urn:finanweb:aviso-pagamento:1.0';
+function aplicarAvisoPagamento(text, via){
+  let doc;
+  try{ doc=new DOMParser().parseFromString(String(text).replace(/^\uFEFF/,''),'application/xml'); }catch(e){ return false; }
+  const rejeita = m => { log('Aviso de pagamento ('+via+') ignorado — '+m); if(via!=='socket') toast(m,'erro'); return false; };
+  if(doc.getElementsByTagName('parsererror').length) return rejeita('XML mal formado.');
+  const r=doc.documentElement;
+  if(r.localName!=='avisoPagamento' || r.namespaceURI!==NS_AVISO) return rejeita('não é um avisoPagamento ('+NS_AVISO+').');
+  const tx=n=>{ const e=[...r.children].find(c=>c.localName===n); return e?e.textContent.trim():''; };
+  const id=r.getAttribute('id')||'', origem=tx('origem'), ref=tx('referencia'), sit=tx('situacao').toUpperCase();
+  if(origem && origem!==ORIGEM) return rejeita('aviso para outro setor ('+origem+').');
+  if(id && state.avisos.includes(id)) return rejeita('aviso '+id+' já aplicado.');
+  const p=state.pedidos.find(x=>x.num===ref);
+  if(!p) return rejeita('a compra '+ref+' não existe no Compras.');
+  const antes=p.fin;
+  if(sit==='PAGO'){ p.fin='Pago'; p.pagoEm=tx('dataPagamento')||hojeISO(); p.valorPago=parseFloat(tx('valor'))||undefined; p.avisoFin='PAGO'; }
+  else if(sit==='CANCELADO'){ p.avisoFin='CANCELADO'; if(p.fin==='Pago') p.fin='Pendente'; }
+  else return rejeita('situação desconhecida "'+sit+'".');
+  if(id){ state.avisos.unshift(id); state.avisos=state.avisos.slice(0,500); }
+  log('Financeiro avisou ('+via+'): compra '+ref+' '+(sit==='PAGO'?'paga em '+fmtData(p.pagoEm):'cancelada')+'. Situação financeira: '+antes+' → '+p.fin+'.');
+  save(); renderPedidos();
+  toast(sit==='PAGO' ? 'Financeiro pagou a compra '+ref+'.' : 'Financeiro cancelou a compra '+ref+'.', sit==='PAGO'?'ok':'erro');
+  return true;
+}
+
+// ================= HISTÓRICO DE XML ===========================================
+// Cada XML gerado, enviado ou recebido, com o contrato (XSD) identificado pela raiz/namespace.
+const FIN_XSD='https://finanwebsistema.vercel.app/api/contratos/';
+const CONTRATOS = [
+  { id:'estoque-v2', nome:'Estoque v2 (saldo e movimentações)', sistema:'Estoque', teste:x=>/<estoque[\s>]/.test(x), xsd:()=>{ const u=est().apiUrl; return u? u+'/xml/estoque.xsd' : ''; } },
+  { id:'recebimento-v1', nome:'recebimento-v1', sistema:'Estoque', teste:x=>x.includes('urn:compras:recebimento:1.0'), xsd:()=>'contratos/recebimento-v1.xsd' },
+  { id:'previsao-entrega-v1', nome:'previsao-entrega-v1', sistema:'Estoque', teste:x=>x.includes('urn:compras:previsao-entrega:1.0'), xsd:()=>'contratos/previsao-entrega-v1.xsd' },
+  { id:'confirmacao-recebimento-v1', nome:'confirmacao-recebimento-v1', sistema:'Estoque', teste:x=>/<([\w.-]+:)?confirmacaoRecebimento[\s>]/.test(x), xsd:()=>'contratos/confirmacao-recebimento-v1.xsd' },
+  { id:'consulta-disponibilidade', nome:'consultaDisponibilidade', sistema:'Estoque', teste:x=>/<consultaDisponibilidade[\s>]/.test(x), xsd:()=>'contratos/disponibilidade-estoque.xsd' },
+  { id:'resposta-disponibilidade', nome:'respostaDisponibilidade', sistema:'Estoque', teste:x=>/<respostaDisponibilidade[\s>]/.test(x), xsd:()=>'contratos/disponibilidade-estoque.xsd' },
+  { id:'saida-v2', nome:'saida-v2 (contas a pagar)', sistema:'Financeiro', teste:x=>x.includes(NS_SAIDA), xsd:()=>FIN_XSD+'saida-v2.xsd' },
+  { id:'pendencias-consulta', nome:'consultaPendencias', sistema:'Financeiro', teste:x=>x.includes(NS_PEND)&&/<consultaPendencias[\s>]/.test(x), xsd:()=>FIN_XSD+'pendencias-fornecedor-v1.xsd' },
+  { id:'pendencias-resposta', nome:'respostaPendencias', sistema:'Financeiro', teste:x=>/<([\w.-]+:)?respostaPendencias[\s>]/.test(x), xsd:()=>FIN_XSD+'pendencias-fornecedor-v1.xsd' },
+  { id:'aviso-pagamento', nome:'avisoPagamento', sistema:'Financeiro', teste:x=>x.includes(NS_AVISO), xsd:()=>FIN_XSD+'aviso-pagamento-v1.xsd' },
+];
+const contratoDe = x => CONTRATOS.find(c=>{ try{ return c.teste(x); }catch(e){ return false; } }) || null;
+const XML_MAX = 200000, HIST_MAX = 200;
+function regXml(o){
+  const xml=String(o.xml||'').replace(/^\uFEFF/,'');
+  const c=contratoDe(xml);
+  if(!c && o.direcao==='enviado') return;
+  const ref=(xml.match(/referencia="([^"]+)"/)||xml.match(/<idConsulta>([^<]+)</)||xml.match(/<lote_id>([^<]+)</)||xml.match(/\bid="([^"]+)"/)||[])[1]||'';
+  state.xmlHist = state.xmlHist || [];
+  state.xmlHist.unshift({ id:uid(), em:new Date().toISOString(), direcao:o.direcao, via:o.via, contrato:c?c.id:'', nome:c?c.nome:'XML não identificado',
+    sistema:c?c.sistema:'Estoque', ref, ok:o.ok!==false, detalhe:o.detalhe||'', cortado:xml.length>XML_MAX, xml:xml.slice(0,XML_MAX) });
+  state.xmlHist = state.xmlHist.slice(0,HIST_MAX);
+  save();
+  if(!el('#v-estoque').hidden) renderEstoque();
+}
+// envolve a aplicação de um XML recebido: guarda o resultado e o motivo (último log gerado)
+function comHistorico(fn){
+  return function(text, via){
+    const antes=state.logs[0];
+    const ok=fn(text, via);
+    const detalhe = state.logs[0]!==antes ? state.logs[0].evt : '';
+    regXml({ direcao:'recebido', via, xml:text, ok:!!ok, detalhe });
+    return ok;
+  };
+}
+aplicarXmlEstoque = comHistorico(aplicarXmlEstoque);
+aplicarRespostaPendencias = comHistorico(aplicarRespostaPendencias);
+aplicarAvisoPagamento = comHistorico(aplicarAvisoPagamento);
+
+const fhx = { q:'', sis:'', dir:'' };
+const VIA_TXT = { arquivo:'Arquivo', socket:'Socket', api:'API' };
+function renderHistorico(){
+  const lista0 = state.xmlHist || [];
+  const q=canonKey(fhx.q);
+  const lista=lista0.filter(h=>(!fhx.sis||h.sistema===fhx.sis) && (!fhx.dir||h.direcao===fhx.dir) && contem(q, h.nome, h.ref, h.detalhe, h.xml.slice(0,4000)));
+  el('#hx-xsds').innerHTML = CONTRATOS.filter((c,i,a)=>c.xsd() && a.findIndex(o=>o.xsd()===c.xsd())===i)
+    .map(c=>`<a class="chip" href="${esc(c.xsd())}" target="_blank" rel="noopener">${esc(c.xsd().split('/').pop())}</a>`).join('');
+  el('#empty-hist').hidden = lista.length>0;
+  el('#empty-hist-t').textContent = lista0.length ? 'Nenhum XML com esses filtros' : 'Nenhum XML registrado ainda';
+  el('#empty-hist-p').textContent = lista0.length ? 'Limpe a busca ou troque os filtros.' : 'Envie entradas, previsões ou consultas, ou importe um XML do Estoque, e cada mensagem aparece aqui.';
+  el('#tb-hist').innerHTML = lista.map(h=>{
+    const c=CONTRATOS.find(x=>x.id===h.contrato), xsd=c?c.xsd():'';
+    const res = h.direcao==='enviado'
+      ? `<span class="badge b-green">${h.via==='arquivo'?'Gerado':'Enviado'}</span>`
+      : (h.ok ? '<span class="badge b-green">Processado</span>' : '<span class="badge b-red">Recusado ou ignorado</span>');
+    return `<tr>
+      <td class="dim small">${esc(fmtDataHora(h.em))}</td>
+      <td><span class="badge ${h.direcao==='enviado'?'b-blue':'b-amber'}">${h.direcao==='enviado'?'Enviado':'Recebido'}</span></td>
+      <td><strong>${esc(h.nome)}</strong> <span class="small dim">${esc(h.sistema)}</span>${h.ref?'<div class="small dim code">'+esc(h.ref)+'</div>':''}</td>
+      <td class="dim">${esc(VIA_TXT[h.via]||h.via||'—')}</td>
+      <td>${res}${h.detalhe?'<div class="small dim" style="max-width:340px">'+esc(h.detalhe)+'</div>':''}</td>
+      <td><div class="acts"><button class="act" data-hx-ver="${h.id}">Ver</button><button class="act muted" data-hx-baixar="${h.id}">Baixar</button>${xsd?`<a class="act muted" href="${esc(xsd)}" target="_blank" rel="noopener">XSD</a>`:''}</div></td>
+    </tr>`;
+  }).join('');
+}
+el('#hx-q').oninput=e=>{ fhx.q=e.target.value; renderHistorico(); };
+el('#hx-sis').onchange=e=>{ fhx.sis=e.target.value; renderHistorico(); };
+el('#hx-dir').onchange=e=>{ fhx.dir=e.target.value; renderHistorico(); };
+el('#hx-limpar').onclick=()=>{
+  if(!(state.xmlHist||[]).length){ toast('O histórico já está vazio.'); return; }
+  if(confirm('Apagar todo o histórico de XML? Os pedidos, entradas e consultas não são afetados.')){ state.xmlHist=[]; save(); renderEstoque(); toast('Histórico de XML apagado.','ok'); }
+};
+function prettyXml(x){
+  if(/>\s*\n\s*</.test(x)) return x;
+  let ind=0;
+  return x.replace(/>\s*</g,'>\n<').split('\n').map(l=>{
+    if(/^<\//.test(l)) ind=Math.max(0,ind-1);
+    const out='  '.repeat(ind)+l;
+    if(/^<[^!?\/][^>]*[^\/]>$/.test(l) || /^<[^!?\/\s>]+>$/.test(l)) ind++;
+    return out;
+  }).join('\n');
+}
+function nomeArquivoHist(h){ return (h.contrato||'xml')+'_'+(h.ref||h.em.slice(0,10)).replace(/[^\w.-]+/g,'-')+'.xml'; }
+let hxAtual=null;
+el('#tb-hist').onclick=e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  const h=(state.xmlHist||[]).find(x=>x.id===(b.dataset.hxVer||b.dataset.hxBaixar)); if(!h) return;
+  if(b.dataset.hxBaixar){ downloadXML(nomeArquivoHist(h), prettyXml(h.xml)); return; }
+  hxAtual=h;
+  const c=CONTRATOS.find(x=>x.id===h.contrato), xsd=c?c.xsd():'';
+  el('#xml-title').textContent=h.nome;
+  el('#xml-meta').textContent=(h.direcao==='enviado'?'Enviado':'Recebido')+' via '+(VIA_TXT[h.via]||h.via)+' em '+fmtDataHora(h.em)+(h.ref?', referência '+h.ref:'')+(h.cortado?'. XML grande, exibindo os primeiros 200 mil caracteres.':'.');
+  el('#xml-view').textContent=prettyXml(h.xml);
+  const a=el('#xml-xsd'); a.hidden=!xsd; if(xsd) a.href=xsd;
+  abrir('#overlay-xml','#xml-copiar');
+};
+el('#xml-copiar').onclick=async()=>{
+  if(!hxAtual) return;
+  try{ await navigator.clipboard.writeText(prettyXml(hxAtual.xml)); toast('XML copiado.','ok'); }
+  catch(e){ toast('Não consegui copiar. Selecione o texto e use Ctrl+C.','erro'); }
+};
+el('#xml-baixar').onclick=()=>{ if(hxAtual) downloadXML(nomeArquivoHist(hxAtual), prettyXml(hxAtual.xml)); };
+
+// ---------------------------- logs / toasts ---------------------------------
+el('#btn-clear-logs').onclick=()=>{
+  if(!state.logs.length){toast('Não há logs para limpar.');return;}
+  if(confirm('Limpar todos os logs? Essa ação não pode ser desfeita.')){ state.logs=[]; save(); renderLogs(); toast('Logs limpos.','ok'); }
+};
+function toast(msg, tipo='info'){
+  const box=el('#toasts');
+  const t=document.createElement('div');
+  t.className='toast '+tipo; t.setAttribute('role', tipo==='erro'?'alert':'status');
+  t.textContent=msg;
+  box.appendChild(t);
+  requestAnimationFrame(()=>t.classList.add('on'));
+  while(box.children.length>4) box.firstChild.remove();
+  setTimeout(()=>{ t.classList.remove('on'); setTimeout(()=>t.remove(),250); }, tipo==='erro'?6000:3200);
+}
+// ---------------------------- boot ------------------------------------------
+if(!load()){ seed(); }
+else {
+  state.importados = state.importados || []; state.movimentacoes = state.movimentacoes || [];
+  state.config = state.config || {empresa:'',cnpj:'',usuario:''};
+  state.consultaSeq = state.consultaSeq || 0; state.consultas = state.consultas || [];
+  if(state.pendencias===undefined) state.pendencias = null;
+  state.socket = state.socket || {url:'http://localhost:8787'};
+  recalcUsos();
+}
+est();
+// conserta endereço errado salvo antes (Finanweb ou com caminho no lugar da base do Estoque)
+if(state.estoque.apiUrl && (/finanweb/i.test(state.estoque.apiUrl) || /\/(contratos|integracoes)(\/|$)/i.test(state.estoque.apiUrl))) state.estoque.apiUrl='';
+state.xmlHist = state.xmlHist || [];
+state.socket = Object.assign({ url:'http://localhost:8787', destFin:'#finanweb', destEst:'#sistema-de-estoque' }, state.socket||{});
+state.avisos = state.avisos || [];
+el('#sock-dest-fin').value = state.socket.destFin;
+el('#sock-dest-est').value = state.socket.destEst;
+save();
+el('#sock-url').value = state.socket.url;
+renderAll();
+irPara(location.hash.slice(1) || 'pedidos');
+renderSock(); renderSockStatus();
+if(!EX) toast('O arquivo estoque-xml.js não foi encontrado. A aba Estoque precisa dele na mesma pasta.','erro');
+sockConectar();
+</script>
+</body>
+</html>

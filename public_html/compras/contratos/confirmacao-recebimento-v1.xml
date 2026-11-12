@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<confirmacaoRecebimento xmlns="urn:compras:confirmacao-recebimento:1.0" versao="1.0">
+  <origem>estoque</origem>
+  <dataProcessamento>2026-10-30</dataProcessamento>
+  <resultados>
+    <resultado referencia="REC-1001-7" status="DIVERGENTE">
+      <divergencia>
+        <sku>MOUSE-01</sku>
+        <quantidadeInformada>20</quantidadeInformada>
+        <quantidadeContada>19</quantidadeContada>
+        <motivo>Contagem fisica encontrou 19 unidades.</motivo>
+      </divergencia>
+      <mensagem>Entrada registrada com a quantidade contada.</mensagem>
+    </resultado>
+  </resultados>
+  <totalizador>
+    <qtdRegistros>1</qtdRegistros>
+    <qtdAceitos>0</qtdAceitos>
+  </totalizador>
+</confirmacaoRecebimento>
